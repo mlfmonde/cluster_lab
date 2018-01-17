@@ -1,0 +1,44 @@
+#cloud-config
+
+hostname: nepri
+
+write_files:
+    -
+        path: /etc/systemd/network/zz-default.network
+        permissions: '0644'
+        owner: root
+        content: "[Network]\nDHCP=yes\n\n[DHCP]\nClientIdentifier=mac\nUseMTU=true\nUseDomains=true\n"
+    -
+        path: /opt/bin/dockershell
+        permissions: '0555'
+        owner: root
+        content: "#!/bin/bash\nexec docker exec -it $USER bash"
+    -
+        path: /etc/sysctl.d/vm.conf
+        permissions: '0644'
+        owner: root
+        content: "vm.max_map_count = 262144\n"
+    -
+        path: /etc/docker/daemon.json
+        permissions: '0644'
+        owner: root
+        content: "{\n  \"log-driver\": \"json-file\",\n  \"log-opts\": {\n    \"max-size\": \"3m\",\n    \"max-file\": \"5\",\n    \"labels\": \"format,reseau,ets,service\"\n  }\n}\n"
+users:
+    -
+        name: mlf
+        passwd: "$6$rounds=4096$FsDN0XnAhmWx$z4krcKaENLddTQGL2qaTF0ZGudpaojq1ait37UHWDFW6N46tmBq8Dl28iWcr7WbMMxdkq0.qedPLu/41ai6oq0"
+        groups:
+            - sudo
+            - docker
+        ssh-authorized-keys:
+            - ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAt5C+jF0KRK7VUBrfUjh4KDN6I2WnHMpDIEMXP0hw+1xyhSfp3fDjIeiUIEEV4TjjrrgbT9vXWB99Wb/ktUZZX5V27RKptnX5QWyjEzsH2ITaylyYY54IHvPRf4XBhXOmRgl9255sFZ7EIa++v1xE3bkTGB+EIzUNaRL9ykZ4/UE= ccomb@portouf
+            - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC1oEs5NIGagD2CB+KFEUw0Aj0qD/AuPqCpXXc+wyUlmH5Vl4JCTFyR1q20cO8TNg4Obz07nHceDYNySMOE7asRPRJF4OvNfMlOH5A2zu9RWz/JHZozX0vrUGMdFha8qGHWAJRzZC9+SrGxtldEUQFkf41TtkrPzpXWSz4XdLUIUjvwatykvYLq9BgTRjPDNu5ZWRv7Te1HykmO8ve+b/6YJ/pANv5XsifJDxS+9oG+RISS8wtYxIYoZKe/DLqki6kefAroDkj4QPp5L4isJRAsHVpBNWWgj2gEFlNlKsdCVTeH8hUCgBTDvbAwhB5PDhUVkTulYBe5IRm8jnbsLZzJ pverkest@petrus-v
+            - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDE2J0XXUnGNOkqkxH3zQWk9ZYKiRhYhhVoWjYtkYmPL/yRQlK4mIZnZ86WjZYzrp5vHvBfSRNpKcjoOk9+iYEmrjXYDMRKZq4Bg86dJKHtGGBllxrjaAqEbWtHFcT7FoMEPUYm2zolnmRLTwHWmjUcn2pCUY8THiEXQmHdcMcJTM68kPBKbmQVQ0yn1Fx07X+HTFXfpKZOxm/4o0gnahiBvMAQzV1uwLHVnpoftXRfWbo2FUTzjc4l+4FKir6r/tZ3h/WdoSFKquQ5GkNJdBoOMyf3WTBu2JnZwdQNpGiWuBEItMZ8Xv6BqRG4tSWxpthrKCxh85DVjpO9m63NOp5L sandre@anybox.fr
+            - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDhO/mu2Cf3D2MplEkHue4helk1D4eOhWTynagUlcMhj2DfFKHAWjaRxHT8D6YaFhaZvjYsqu0TCPv/gsC00yri1pUg8mG0AIm7QO2vacGw+i9xxzIKGf0XIM7FcIVMiKJEYJmehW0vx7zrqu2Lkw5ztfJZ7WvBHzVireydbi8nTlS6soPscjs//iQeVDk8uywreEcP8U5hkBggwyGwJSpTDwc3XNe/OpqjBdZDglREXhrim/sI419cIdhNU+NrZ8msERq3NtK/T9XKnrV5nEDf3XI92kBKM4kpSd7casN9ZFKN8kBwReMwCIx3Tn6nW4yCxeib/4R98IeVSLxVa3BEsgWzvxzuPVKWA+PcELv+1p/1luV4p5Sdyx55OheOEJ8/X5ap4lErQhx6R5rl1ejgmaR+NqDv2rZWOHvKD0kd0xz39O8ClThVPmfXqYOdK0Ihuxd5EkTO/7Vy2zkqj8I+nrmegrGFlXmg6ig3hVezjJ757bQzfAstwMMyGHDNiT1eFHFIgzOOs4kXMmm9ICoJxL3M5+6XKHFKa4iooEmf1ZDgDHI7i1zv7aD53tbSe3h/KB6poK1Uchbpmn7maWXumM2LiPo/k3zOF6cdjhsiUpq9nmKTIzCQ64xpmzcSRLwFeVp48tPyOyAeQQU/QEw1TuKTsrVkpZk2CijS6mWd3Q== fjouatte@anybox.fr
+            - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAXjAs01NFmlTy5m4uQ9URrVRbZjS1ev2GdroNKVZy9q jssuzanne@pc8.homei
+            - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDCaQBh8REjPCbJjFZo3kl5ZtaSEqlrxHOhIDLIFBgpidUxz2G0CCXqtE9lEbzazrkrtR3AQfcZDRWgEF4lVVYga09aXwBpAf3tOt1clt07e9mmE4QjbOYdpeiBDP4Xod4LMU76t4+iuhj4QwsZ9KKhz8RFjL45wFXzMURfChCffp0bZqLmo4EL/a2lF+g9XNQMPdog1Jd77R3kHS5+ROXGRSgVOUvY6wqaTt5yfaxn8KnlBvbLxQQ5vngbGWsRBmcPp6T+TnfWZCHvsryDOalAn6y1y489BZG7TcmpFk3Au+YDDNaySmymnfyAEYMuIBcOd8wWmtHgRS2qH3GuHbqO+VSznNqLzn5KytXf10vDMdydn/uSOor/pmMwf9UrudEF8tY0HK0aadhhuvat1AxKXPq661xiZv/cPNkpxqLpqtLYz2j7eBgtMvqHgvjProgImLPPKFMqlr0OPb43W3iMUfuOJ696KWj03R92s1qcETO+OkO/PLGC81dQ+p1BHfeBY/l68i7nX5LkK5xKe8wntO/NX71+OPRMHFKpsEqzYgmD+/5q96dYIZhtW9nCR8Se2/IlllIytsSW5Q1qyEFgM5fyhs5vs72OmJm02NBMQ+IEI417TzPGBC8Y4+CnoXN3uq4pRNrbHX21lh8750aoEusmi1lBnst9g4bDstldtQ== fcastarede@anybox.fr
+            - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDiZWDwAd0yMaz2fZC16m+x5CnjvPaM+9Li1XxhgE9RXxeyi839ReQV4A9MsXP9O9zK2rioaOnNGgl7Sd2hh4qNzutcz0tA6dxjuJlkZ+ZOw+dfjjk28LWmuYWQCjwh+PU9QkZvmi3XGWuK6oQYW48g1sWGT7kx7ZAa66Skazz1yjjv/SAkCiK1NNuA+TgzJlBUQwAx45DWbkt3X/TArFyUNE1VsEFdcPUgr9SYRTy5mMY26Q1ul8yWcZX6Kd1QoT6mv60uf+vGPQ4qOAw7mkW46a9lM+VVbxuIxyxypXwzBvuky1f71NzpPA9bRrgkp8hIng3NRNAfyojDGAFdVS7P wanoo@YogaBook
+            - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDKjIVaHpZZL4cbMOPe8a/OdxbtT/jfupBKtvc9CQmwAML8GJHtHfr+rVCDRVTHQm3XOfS+5BiIHs3sy1olsFmlSnMHVHnUR1CbNvAsVX7queXABW6xmyOEaXeIwfutB7VC1qxVVpNBW6LubX1Ht7AG3U8762dgsRLlfDMvH1rk6gF7lZOonBLiq9BWUXLNu7lK5k3VVrlrYjMqL8zqFANXBUj7elCjEhQovNxkniGa0WwBrUhZcpAucxDMzCfWKu3XtLJM/+oZ8uZHxoZ8Z6Rqpi/45hPzNO4dSmnAeV7Th/IqieAETlxH5VBlLUQsWDuTQS7tSML35yW6B4sRBpsB eroug@RAMSES
+            - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDsQY8mKScAkaAF5hEPIQt2mIVvClryGdSwUqiIQOcGdrycLJDMnlAW/YI/mmX+HJ4Aa/CYbYRZuhpSXTLE3P2AddSZRIYzp6Ip4qfAD3R/09/Xe9p339wHT9JTnX6Iu/MIZsjFSDeSVsIMcZTqGRIMMG281kgStoYN1rMrvOap6MB+7Cn5Fjm8yhbIqypx+2/Rubg4Aa8MNDo0JtFrGE+otn4NQjZT2o6ApqSHnKnXaoZUPCu0Le+P9MOz2YKFmO6BD1Ol29tZlXnqp4mSXHlKJ0pnTK3pEb/xIjSQvwk8m5Mz+xtnxYmYyVhpR7WWwh81fDH+BsGCEW7iazc/6JAp wanoo@Wanoo
+            - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCzJB5qad6XgZVxlfsNS08neh5pS3zFL6Q715MyafIbDZ5L/o+F9UvpMU1cuDSu2fFHVvApNiMTB9Q340ILllJA5KYhAqp9aOPlmv5LQylktOzY0ORSH9isLBj1pUjV9ZMf8YjK3AtmAEQn0CPdBgVZtln+JE+5YkHsS8UzeEi93yLcGHDgNEtKcrrbuKyOdvGQbsjqPoD1jSUItauLo4B9PVHvyK2IUJGA/tI1ByybRNDNWvuYR/F12mxt/TlaMIu3vFplV/gNDCLTVcmwpLReVW/xeKFEzgeGybgyz8GAXD/8DLl+tJPQvzFEu8nWXWAv7TWLWT9z3sFW+8iiXWZp bmongis@mlfmonde.org
+            - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDueeky/chDf5la9yfsZdh/XGE6SxbgPL3NWcj62WxSDxr11enP6beLdd1MfrOpo0FbjsJ0AcAoPVbJwk3UJBk7ZVkEyKRRnlPF8CM7bgMni6uWoj1yBJBYu7H7abXstnaLy5MAg4L3kPC2WYORyRHoJ5EBxzFt7UqEkq34kZWMmP9o7gH+KlXzqyqtcTO29l6dhBVpUv0iYAEKY8K/8d50d/B9u1L15MVx6taXqDGCUr/8K1mPS5dTw6XSVIISzjelvziaM0wd8odJJTNu+E9nXjIx3Q4c6DMa73MyfZLaBP19EsoQt/pNOCSJWX54mFiTz+jJCUPKZsBKhkLkLoS6h78yLBmfZVq2ZMOLFKmcy1vLsLz+Ge2mGz9qiKg4SxSOhyGKDhg0bsR+XOg9i3/H7VGGl/crE/LEMbEZDWErrd8AFsJB5pjbFJ0fne39W6CQ4xsfGoaipjOPVT+JjUwzldF3amBui4PJdIdcmxoMY88QAHtgAZ2J0itlFJ+A8Of5GLsR/U6y28m3860umyMUVdfOEweSIYn+VkC6hCp5rmgncfU1vMiQFpbNiRTMTQ6ziaCRq6CRHCPxD1OV9Q0pE049eCp9z3jSDO7EZyUSLGcDDx4bsQ4wRZv0jLOVABGYL547jR1XBT6KaaR8Vl1lQ9VS3OrIVpy4dO5zezDCzQ== aoukkal@mlfmonde.org

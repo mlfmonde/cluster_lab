@@ -1,0 +1,13 @@
+<network>
+  <name>rpn</name>
+  <uuid>147ba17c-37dc-43fc-a6bf-babf66a5b382</uuid>
+  <bridge name='virbr1' stp='on' delay='0'/>
+  <mac address='52:54:00:fb:3b:06'/>
+  <domain name='rpn'/>
+  <ip address='10.0.100.1' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='10.0.100.128' end='10.0.100.254'/>
+    </dhcp>
+  </ip>
+</network>
+
