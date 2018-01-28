@@ -15,7 +15,7 @@ test environment.
 * add [salt repo](https://repo.saltstack.com/#debian) and update your indexes
 * install dependencies:
   ```bash
-  sudo apt install salt-cloud libvirt-daemon salt-master libvirt-clients
+  sudo apt install salt-cloud libvirt-daemon salt-master libvirt-clients virt-manager
   ```
 * get [stable coreos image](
   https://coreos.com/os/docs/latest/booting-with-libvirt.html):
@@ -64,6 +64,11 @@ test environment.
   gpg --verify coreos_production_qemu_image.img.bz2.sig
   bunzip2 coreos_production_qemu_image.img.bz2
   ```
+> **Note**: if you want an old core-os version url may looks like
+> ```bash
+> wget https://stable.release.core-os.net/amd64-usr/1465.7.0/coreos_production_qemu_image.img.bz2{,.sig}
+> ```
+
 
 ## Prepare template coreos image (test using qemu)
 
@@ -85,17 +90,32 @@ total 823112
 > coreos_production_qemu_image.img. Making any changes to a base image (
 > coreos_production_qemu_image.img in our example) will corrupt its snapshots.
 
+## Prepare cloud-init virtual Compact Disk (.iso)
+
 ```bash
 mkdir -p provision/openstack/latest
 vim provision/openstack/latest/user_data
 [genisoimage|mkisofs] -R -V config-2 -o coreos-provision.iso provision/
 ```
 
-* préparer un disque btrfs
+> **Tips**: You can mount iso image as disk partition likes this
+> ```bash
+> mkdir mountprov
+> mount -o loop provision.iso mountprov/
+> ```
+
+
+## Prepare BTRFS disk image for RAID0 (.qcow2)
 
 ```bash
-qemu-img create -f qcow2 /var/lib/libvirt/images/coreos/btrfs.img 25G
+qemu-img create -f qcow2 /var/lib/libvirt/images/coreos/btrfs1.img 25G
+qemu-img create -f qcow2 /var/lib/libvirt/images/coreos/btrfs2.img 25G
 ```
+
+
+# Prepare virt domain and create the template machine
+
+> *Good to know*: a domain in virtlib glossary means a virtual machine
 
 ```bash
 virt-install --connect qemu:///system \
@@ -105,7 +125,8 @@ virt-install --connect qemu:///system \
              --os-type=linux \
              --os-variant=virtio26 \
              --disk path=/var/lib/libvirt/images/coreos/coreos-template.qcow2,format=qcow2,bus=virtio \
-             --disk path=/var/lib/libvirt/images/coreos/btrfs.img,format=qcow2,bus=virtio \
+             --disk path=/var/lib/libvirt/images/coreos/btrfs1.img,format=qcow2,bus=virtio \
+             --disk path=/var/lib/libvirt/images/coreos/btrfs2.img,format=qcow2,bus=virtio \
              --disk path=/var/lib/libvirt/images/coreos/coreos-provision.iso,device=cdrom \
              --network network=default \
              --network network=rpn \
@@ -113,18 +134,33 @@ virt-install --connect qemu:///system \
              --print-xml > /var/lib/libvirt/images/coreos/domain.xml
 ```
 
+
 ```bash
 virsh net-create rpn.xml 
 virsh define domain.xml
 ```
 
+Congrat's you get it !
+
+
+### Some command to know
+
+* Get VM IP address on default network
 
 ```bash
-#virsh start coreos-template
-#virsh net-dhcp-leases default
-#ssh mlf@192.168.122.x
-# save a network configuration
-# virsh net-dumpxml rpn > rpn.xml
+virsh net-dhcp-leases default
+ssh mlf@192.168.122.x
+```
+
+* start a VM from command line (do not miss virt-manager GUI)
+```bash
+virsh start coreos-template
+```
+
+* save a network configuration
+
+```bash
+virsh net-dumpxml rpn > rpn.xml
 ```
 
 ## configure salt-cloud
