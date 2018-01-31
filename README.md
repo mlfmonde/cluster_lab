@@ -113,7 +113,7 @@ qemu-img create -f qcow2 /var/lib/libvirt/images/coreos/btrfs2.img 25G
 ```
 
 
-# Prepare virt domain and create the template machine
+## Prepare virt domain and create the template machine
 
 > *Good to know*: a domain in virtlib glossary means a virtual machine
 
@@ -143,7 +143,7 @@ virsh define domain.xml
 Congrat's you get it !
 
 
-### Some command to know
+### virsh command nice to know
 
 * Get VM IP address on default network
 
@@ -163,33 +163,72 @@ virsh start coreos-template
 virsh net-dumpxml rpn > rpn.xml
 ```
 
+## prepare coreos-template before clone it
+
+Some of this may probably later manage by salt itself or the image provided in
+an other way.
+
+In order to be able to spawn multiple nodes of the same coreos we needs to
+prepare specifics requirements inside coreos machine likes cloning cluster,
+upgrade coreos and so on, format BTRFS partitions...
+
+
 ## configure salt-cloud
 
-In order to let salt cloud to use configuration from this repo you may
-adapt default salt configuration.
+In order to let salt cloud and salt-cloud to use configuration from this repo
+you may adapt default salt configuration.
 
-* salt user
 * clone this repo somewhere (if not already done!)
 * link salt config to this repo
 
+    sudo ln -s "${PWD}/salt/etc/" /etc/salt
+    sudo ln -s "${PWD}/salt/srv/" /srv/salt
 
-## Spawn 3 coreos nodes
+
+## use salt-cloud to spawn nodes
+
+The following command will clone 3 coreos-template called *c1*, *c2*, *c3* and
+run salt minion container inside each node:
 
 ```bash
-sudo salt-cloud -p mlf-cores c1 c2 c3
+salt-cloud -p mlf-coreos c1 c2 c3
+```
+or using a map file:
+
+```bash
+sudo salt-cloud -m cluster-saltcloud.map -P
 ```
 
+> *Note*: ``-P`` allow to run in parallels
 
-### prepare qcow2 image from stable coreos image
+Then you can run salt commands likes:
 
-This may probably later manage by salt itself or the image provided in an
-other way.
+```bash
+# list minion keys
+salt-key -L
 
-In order to be able to spawn multiple nodes of the same coreos we needs to
-prepare a qcow2 image with our specifics requirements likes cloning cluster
-install cloud_init, upgrade coreos and so on.
+# test ping
+salt 'c*' test.ping
 
-### use salt-cloud to spawn nodes
+# get info from mingion
+
+salt 'cor*' grains.items
+
+# remove minion key
+salt-key -d core1
+```
+
+Destroy nodes:
+
+```bash
+salt-cloud -d c1 c2 c3
+```
+
+Or using a map file:
+
+```bash
+sudo salt-cloud -m cluster-saltcloud.map -d
+```
 
 ### network management
 
