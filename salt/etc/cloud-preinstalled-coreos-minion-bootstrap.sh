@@ -10,6 +10,8 @@ cat > /home/core/salt/minion <<EOF
 {{minion}}
 EOF
 
+sudo hostname '{{ vm['name'] }}'
+
 # mapping dbus to access to systemctl from container
 docker run -d  --privileged \
     --network host \
