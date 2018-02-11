@@ -612,6 +612,9 @@
 #  base:
 #    - /srv/salt
 #
+file_roots:
+  base:
+    - /srv/salt/base
 
 # The master_roots setting configures a master-only copy of the file_roots dictionary,
 # used by the state compiler.
