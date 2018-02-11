@@ -14,3 +14,9 @@ kernel: {{ grains['kernelrelease'] }}
 WARNING: this  server was configured at least partialy by salt. The intent of
 that configuration is for test purpose so we do not expect to follow good
 security practices.
+
+Network:
+{% for device, ips in grains['ip4_interfaces'].items() %}
+{{ device }}:{% for ip in ips %}
+  - {{ ip }}
+{% endfor %}{% endfor %}
