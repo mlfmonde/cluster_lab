@@ -201,6 +201,13 @@ sudo salt-cloud -m cluster-saltcloud.map -P
 
 > *Note*: ``-P`` allow to run in parallels
 
+List available nodes:
+
+```bash
+sudo salt-cloud -f list_nodes libvirt
+```
+
+
 Then you can run salt commands likes:
 
 ```bash

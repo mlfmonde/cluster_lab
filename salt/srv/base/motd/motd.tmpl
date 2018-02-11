@@ -1,0 +1,16 @@
+{{ grains['docker_host']['pretty_name'] }}
+minion: {{ grains['id'] }}
+kernel: {{ grains['kernelrelease'] }}
+{{ grains['cheese'] }}
+
+                     | |
+ _____  ____   _   _ | |__    ___   _   _
+(____ ||  _ \ | | | ||  _ \  / _ \ \ \/ /
+/ ___ || | | || |_| || |_) )| |_| | )  (
+\_____||_| |_| \__  ||____/  \___/ /_/\_\
+              (____/           .
+                       -.___.-`
+
+WARNING: this  server was configured at least partialy by salt. The intent of
+that configuration is for test purpose so we do not expect to follow good
+security practices.
