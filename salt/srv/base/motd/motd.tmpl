@@ -20,3 +20,5 @@ Network:
 {{ device }}:{% for ip in ips %}
   - {{ ip }}
 {% endfor %}{% endfor %}
+Peers:{% for server, addrs in salt['mine.get']('*', 'network.ip_addrs') | dictsort() %}
+  - {{ server }}: {{ addrs[0] }}{% endfor %}
