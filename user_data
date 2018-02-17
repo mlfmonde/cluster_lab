@@ -1,0 +1,27 @@
+#cloud-config
+
+write_files:
+    -
+        path: /etc/systemd/network/zz-default.network
+        permissions: '0644'
+        owner: root
+        content: "[Network]\nDHCP=yes\n\n[DHCP]\nClientIdentifier=mac\nUseMTU=true\nUseDomains=true\n"
+    -
+        path: /opt/bin/dockershell
+        permissions: '0555'
+        owner: root
+        content: "#!/bin/bash\nexec docker exec -it $USER bash"
+    -
+        path: /etc/docker/daemon.json
+        permissions: '0644'
+        owner: root
+        content: "{\n  \"log-driver\": \"json-file\",\n  \"log-opts\": {\n    \"max-size\": \"3m\",\n    \"max-file\": \"5\",\n    \"labels\": \"format,service\"\n  }\n}\n"
+users:
+    -
+        name: core
+        passwd: "$6$rounds=4096$FsDN0XnAhmWx$z4krcKaENLddTQGL2qaTF0ZGudpaojq1ait37UHWDFW6N46tmBq8Dl28iWcr7WbMMxdkq0.qedPLu/41ai6oq0"
+        groups:
+            - sudo
+            - docker
+        ssh-authorized-keys:
+            - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDNm0EFcJrEfqOs4GAhKw7zMKFDNarUNn52WOKIRZ15ZBjgX1GjYeUG6HlHNSBeQRuO0oDv57+N1EaW2nsQIHCd23X/vVYIP3uQeMcYzZodXAi8Ii/3dOZWtaqhLC0Cuwe8irShsoxCeglq7z8Z8ToSn54UYNAaATcg2VfdlRVe0QL1ZD4Hx5QdHl3PXb0XQnkzyaralgBBnttefLRwcUuwGSWR8g6kUT0VdD69vmXNGyy4kWgYxaMK/7JTTnVZSA5OllxdFsZ/oqpy1KYc/fopbflS7ZgDhYXBFHFEzxmY/ZzogCEqbwbf7X+Eq03nDOPgPMQEB8WYN1RRglutEXMF core@cluster.lab

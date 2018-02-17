@@ -1,0 +1,21 @@
+coreos:
+  - core1:
+      minion:
+        log_level: debug
+      grains:
+        cheese: beaufort
+  - core2:
+      minion:
+        log_level: warn
+      grains:
+        cheese: morbier
+  - core3:
+      minion:
+        log_level: warn
+      grains:
+        cheese: comte
+  - core4:
+      minion:
+        log_level: warn
+      grains:
+        cheese: brie
