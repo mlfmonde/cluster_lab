@@ -1,9 +1,12 @@
 # Cluster lab
 
 The intent of the project is to offer a lab to develop new fictionalises
-or fix bug in cluster project withoug breaking produciton.
+or fix bug in cluster project without breaking production.
 
 An other intent would be to provide an automated integration platform.
+
+> **DISCLAMER**: Do not use to deploy cluster in production notably because
+> ssh keys are public in salt/srv/pillar/ssh for testing purpose
 
 Finaly that can be an example of ways to spawn virtual machine for
 test environment.
@@ -20,11 +23,11 @@ test environment.
 * get [stable coreos image](
   https://coreos.com/os/docs/latest/booting-with-libvirt.html):
   ```bash
-  pverkest@oak:~/anybox/clients/MLF/hebergement/cluster_lab$ wget https://coreos.com/security/image-signing-key/CoreOS_Image_Signing_Key.asc
+  $ wget https://coreos.com/security/image-signing-key/CoreOS_Image_Signing_Key.asc
   gpg --import CoreOS_Image_Signing_Key.asc
   # vérifier l'ID de l clefs https://coreos.com/security/image-signing-key/
   # actuellement: 0412 7D0B FABE C887 1FFB  2CCE 50E0 8855 93D2 DCB4 (valide jusqu'en 2018-06-01)
-  pverkest@oak:~$ gpg --edit-key buildbot@coreos.com
+  $ gpg --edit-key buildbot@coreos.com
   gpg (GnuPG) 2.1.18; Copyright (C) 2017 Free Software Foundation, Inc.
   This is free software: you are free to change and redistribute it.
   There is NO WARRANTY, to the extent permitted by law.
@@ -77,9 +80,9 @@ root@yourmachine:~# cd /var/lib/libvirt/images
 root@yourmachine:/var/lib/libvirt/images# mkdir coreos
 root@yourmachine:/var/lib/libvirt/images# cd coreos/
 root@yourmachine:/var/lib/libvirt/images/coreos# cp path_to_coreos_production_qemu_image.img .
-root@oak:/var/lib/libvirt/images/coreos# qemu-img create -f qcow2 -b coreos_production_qemu_image.img coreos-template.qcow2
+root@yourmachine:/var/lib/libvirt/images/coreos# qemu-img create -f qcow2 -b coreos_production_qemu_image.img coreos-template.qcow2
 Formatting 'coreos-template.qcow2', fmt=qcow2 size=9116319744 backing_file=coreos_production_qemu_image.img encryption=off cluster_size=65536 lazy_refcounts=off refcount_bits=16
-root@oak:/var/lib/libvirt/images/coreos# ls -l
+root@yourmachine:/var/lib/libvirt/images/coreos# ls -l
 total 823112
 -rw-r--r-- 1 root root 842661888 janv.  4 18:18 coreos_production_qemu_image.img
 -rw-r--r-- 1 root root    196744 janv.  4 18:28 coreos-template.qcow2
@@ -129,14 +132,14 @@ virt-install --connect qemu:///system \
              --disk path=/var/lib/libvirt/images/coreos/btrfs2.img,format=qcow2,bus=virtio \
              --disk path=/var/lib/libvirt/images/coreos/coreos-provision.iso,device=cdrom \
              --network network=default \
-             --network network=rpn \
+             --network network=private_network \
              --vnc --noautoconsole \
              --print-xml > /var/lib/libvirt/images/coreos/domain.xml
 ```
 
 
 ```bash
-virsh net-create rpn.xml 
+virsh net-create private_network.xml 
 virsh define domain.xml
 ```
 
@@ -149,7 +152,7 @@ Congrat's you get it !
 
 ```bash
 virsh net-dhcp-leases default
-ssh mlf@192.168.122.x
+ssh -i salt/srv/pillar/ssh/core_id_rsa core@192.168.122.x
 ```
 
 * start a VM from command line (do not miss virt-manager GUI)
@@ -160,7 +163,7 @@ virsh start coreos-template
 * save a network configuration
 
 ```bash
-virsh net-dumpxml rpn > rpn.xml
+virsh net-dumpxml private_network > private_network.xml
 ```
 
 ## prepare coreos-template before clone it
@@ -191,7 +194,7 @@ The following command will clone 3 coreos-template called *c1*, *c2*, *c3* and
 run salt minion container inside each node:
 
 ```bash
-salt-cloud -p mlf-coreos c1 c2 c3
+salt-cloud -p coreos c1 c2 c3
 ```
 or using a map file:
 

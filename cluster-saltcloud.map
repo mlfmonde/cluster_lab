@@ -1,4 +1,4 @@
-mlf-coreos:
+coreos:
   - core1:
       minion:
         log_level: debug
@@ -14,3 +14,8 @@ mlf-coreos:
         log_level: warn
       grains:
         cheese: comte
+  - core4:
+      minion:
+        log_level: warn
+      grains:
+        cheese: brie

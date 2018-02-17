@@ -6,7 +6,7 @@ from nuka.tasks import (shell, file)
 
 # setup a docker container using the default image
 host = DockerContainer('plop')
-# host = Host(hostname='192.168.122.45', user="mlf")
+# host = Host(hostname='192.168.122.45', user="core")
 
 
 async def do_something(host):
