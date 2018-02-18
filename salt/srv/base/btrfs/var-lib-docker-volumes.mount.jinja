@@ -3,7 +3,7 @@ Before=docker.service
 [Install]
 RequiredBy=docker.service
 [Mount]
-What=/dev/vdb
-Where=/var/lib/docker/snapshots
+What={{ device }}
+Where={{ mount_point }}
 Type=btrfs
-Options=discard,ssd,subvol=snapshots
+Options=discard,ssd,subvol=volumes

@@ -5,7 +5,7 @@
 docker-compose-installed:
   cmd.run:
     - name: curl -Lf https://github.com/docker/compose/releases/download/{{ compose_version }}/docker-compose-`uname -s`-`uname -m` > {{ rootfs }}{{ install_path }}
-    - unless: {{ rootfs }}{{ install_path }}/docker-compose --version | grep {{ compose_version }}
+    - unless: {{ rootfs }}{{ install_path }} --version | grep {{ compose_version }}
 
 docker-compose-executable:
   file.managed:
