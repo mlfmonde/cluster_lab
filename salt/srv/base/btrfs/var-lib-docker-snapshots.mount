@@ -1,0 +1,9 @@
+[Unit]
+Before=docker.service
+[Install]
+RequiredBy=docker.service
+[Mount]
+What=/dev/vdb
+Where=/var/lib/docker/snapshots
+Type=btrfs
+Options=discard,ssd,subvol=snapshots

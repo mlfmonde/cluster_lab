@@ -6,7 +6,7 @@ or fix bug in cluster project without breaking production.
 An other intent would be to provide an automated integration platform.
 
 > **DISCLAMER**: Do not use to deploy cluster in production notably because
-> ssh keys are public in salt/srv/pillar/ssh for testing purpose
+> ssh keys are public in salt/srv/base/ssh for testing purpose
 
 Finaly that can be an example of ways to spawn virtual machine for
 test environment.
@@ -104,7 +104,7 @@ vim provision/openstack/latest/user_data
 > **Tips**: You can mount iso image as disk partition likes this
 > ```bash
 > mkdir mountprov
-> mount -o loop provision.iso mountprov/
+> mount -o loop coreos-provision.iso mountprov/
 > ```
 
 
@@ -152,7 +152,7 @@ Congrat's you get it !
 
 ```bash
 virsh net-dhcp-leases default
-ssh -i salt/srv/pillar/ssh/core_id_rsa core@192.168.122.x
+ssh -i salt/srv/base/ssh/core_id_rsa core@192.168.122.x
 ```
 
 * start a VM from command line (do not miss virt-manager GUI)
@@ -208,6 +208,17 @@ List available nodes:
 
 ```bash
 sudo salt-cloud -f list_nodes libvirt
+```
+
+Refresh mine before apply states:
+
+```bash
+sudo salt '*' mine.update
+```
+
+apply states
+```bash
+sudo salt '*' state.apply
 ```
 
 

@@ -3,7 +3,7 @@
 
 > **Note**: not tested, since I've moved to core user with dedicated ssh key
 > you may condigure .ssh/config file to use the right private key
-> ``salt/srv/pillar/ssh/core_id_rsa``
+> ``salt/srv/base/ssh/core_id_rsa``
 
 ```bash
 python -m venv venvs/nuka
@@ -31,7 +31,7 @@ pip install -e ./nuka --egg nuka[full]
 
 cd cluster_lab/
 https://medium.com/@dperny/forwarding-the-docker-socket-over-ssh-e6567cfab160
-ssh -nNT -L $(pwd)/docker.sock:/var/run/docker.sock -i ../salt/srv/pillar/ssh/core_id_rsa core@192.168.122.45
+ssh -nNT -L $(pwd)/docker.sock:/var/run/docker.sock -i ../salt/srv/base/ssh/core_id_rsa core@192.168.122.45
 
 cd integration_testing/
 export DOCKER_HOST=unix://$(pwd)/../docker.sock
