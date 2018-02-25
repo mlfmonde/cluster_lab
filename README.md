@@ -210,6 +210,12 @@ List available nodes:
 sudo salt-cloud -f list_nodes libvirt
 ```
 
+Refresh grains modules (stored in ``salt://_grains``):
+
+```bash
+sudo salt 'core*' saltutil.sync_grains
+```
+
 Refresh mine before apply states:
 
 ```bash

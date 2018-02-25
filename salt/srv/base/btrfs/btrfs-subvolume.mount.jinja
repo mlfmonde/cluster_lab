@@ -6,4 +6,4 @@ RequiredBy=docker.service
 What={{ device }}
 Where={{ mount_point }}
 Type=btrfs
-Options=discard,ssd,subvol=volumes
+Options=discard,ssd,subvol={{ subvolume }}

@@ -1,9 +1,0 @@
-[Unit]
-Before=docker.service
-[Install]
-RequiredBy=docker.service
-[Mount]
-What={{ device }}
-Where={{ mount_point }}
-Type=btrfs
-Options=discard,ssd,subvol=snapshots

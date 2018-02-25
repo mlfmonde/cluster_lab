@@ -17,5 +17,6 @@ docker run -d  --privileged \
     --network host \
     -v /home/core/salt:/etc/salt \
     -v /var/run/dbus:/var/run/dbus \
+    -v /var/run/docker.sock:/var/run/docker.sock \
     -v /:/rootfs \
     anybox/salt-minion:2017.7

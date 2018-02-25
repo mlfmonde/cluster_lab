@@ -1,8 +1,9 @@
 {% set rootfs = '/rootfs' %}
 {% set dev1 = '/dev/vdb' %}
-{% set dev2 = '{{ dev2 }}' %}
+{% set dev2 = '/dev/vdc' %}
 {% set btrfs_volumes_dir = '/var/lib/docker/volumes' %}
 {% set btrfs_snapshots_dir = '/var/lib/docker/snapshots' %}
+{% set minion_btrfs_mount_point = '/mnt/local' %}
 
 btrfs_format:
   cmd.run:
@@ -11,7 +12,7 @@ btrfs_format:
 
 btrfs_mount_local:
   mount.mounted:
-    - name: /mnt/local
+    - name: {{ minion_btrfs_mount_point }}
     - device: {{ dev1 }}
     - fstype: btrfs
     - mkmnt: True
@@ -20,33 +21,35 @@ btrfs_mount_local:
 
 btrfs_subvolume_create_snapshots:
   cmd.run:
-    - name: btrfs subvolume create /mnt/local/snapshots
-    - unless: btrfs subvolume show /mnt/local/snapshots
+    - name: btrfs subvolume create {{ minion_btrfs_mount_point }}/snapshots
+    - unless: btrfs subvolume show {{ minion_btrfs_mount_point }}/snapshots
     - require:
       - mount: btrfs_mount_local
 
 btrfs_subvolume_create_volumes:
   cmd.run:
-    - name: btrfs subvolume create /mnt/local/volumes
-    - unless: btrfs subvolume show /mnt/local/volumes
+    - name: btrfs subvolume create {{ minion_btrfs_mount_point }}/volumes
+    - unless: btrfs subvolume show {{ minion_btrfs_mount_point }}/volumes
     - require:
       - mount: btrfs_mount_local
 
 btrfs_systemd_mount_unit_snapshots:
   file.managed:
-    - name: /rootfs/etc/systemd/system/var-lib-docker-snapshots.mount
-    - source: salt://btrfs/var-lib-docker-snapshots.mount.jinja
+    - name: {{ rootfs }}/etc/systemd/system/var-lib-docker-snapshots.mount
+    - source: salt://btrfs/btrfs-subvolume.mount.jinja
     - template: jinja
     - defaults:
+        subvolume: snapshots
         device: {{ dev1 }}
         mount_point: {{ btrfs_snapshots_dir }}
 
 btrfs_systemd_mount_unit_volumes:
   file.managed:
-    - name: /rootfs/etc/systemd/system/var-lib-docker-volumes.mount
-    - source: salt://btrfs/var-lib-docker-volumes.mount.jinja
+    - name: {{ rootfs }}/etc/systemd/system/var-lib-docker-volumes.mount
+    - source: salt://btrfs/btrfs-subvolume.mount.jinja
     - template: jinja
     - defaults:
+        subvolume: volumes
         device: {{ dev1 }}
         mount_point: {{ btrfs_volumes_dir }}
 
@@ -64,6 +67,7 @@ btrfs_subvolume_mount_snapshots:
       - systemctl status var-lib-docker-snapshots.mount
     - require:
       - file: btrfs_systemd_mount_unit_snapshots
+      - cmd: btrfs_reload_systemd
 
 btrfs_subvolume_mount_volumes:
   cmd.run:
@@ -72,13 +76,4 @@ btrfs_subvolume_mount_volumes:
       - systemctl status var-lib-docker-volumes.mount
     - require:
       - file: btrfs_systemd_mount_unit_volumes
-
-
-# btrfs_umount_local:
-#   mount.unmounted:
-#     - name: /mnt/local
-#     - device: {{ dev1 }}
-#     - require:
-#       - cmd: btrfs_subvolume_create_snapshots
-#       - cmd: btrfs_subvolume_create_volumes
-
+      - cmd: btrfs_reload_systemd
