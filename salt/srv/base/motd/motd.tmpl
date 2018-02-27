@@ -15,10 +15,10 @@ WARNING: this  server was configured at least partialy by salt. The intent of
 that configuration is for test purpose so we do not expect to follow good
 security practices.
 
-Network:
+Networks:
 {% for device, ips in grains['ip4_interfaces'].items() %}
-{{ device }}:{% for ip in ips %}
+{% if device in ['eth0', 'eth1'] %}{{ device }}:{% for ip in ips %}
   - {{ ip }}
-{% endfor %}{% endfor %}
+{% endfor %}{% endif %}{% endfor %}
 Peers:{% for server, addrs in salt['mine.get']('*', 'network.ip_addrs') | dictsort() %}
   - {{ server }}: {{ addrs[0] }}{% endfor %}
