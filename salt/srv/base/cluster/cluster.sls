@@ -45,13 +45,22 @@ cluster-cluster-systemd-unit:
         cmd_stop: "stop"
 #        remain_after_exit: "no"
 
+cluster-deploy-directory:
+  file.directory:
+    - name: /home/{{ username }}/deploy
+    - user: 100
+    - makedirs: True
+
 cluster-docker-compose-lab:
   file.managed:
     - name: {{ rootfs }}/home/{{ username }}/cluster/docker-compose.lab.yml
     - source: salt://cluster/docker-compose.lab.yml.jinja
     - template: jinja
+    - defaults:
+        deploy_path: /home/{{ username }}/deploy
     - require:
       - git: cluster-code
+      - file: cluster-deploy-directory
 
 cluster_reload_systemd:
   cmd.run:

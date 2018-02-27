@@ -11,3 +11,13 @@ services:
                 "handler": "/handler.py"}]
             }'
         CONSUL_BIND_INTERFACE: eth1
+    volumes:
+      - consul_docker_cfg:/home/consul/.docker
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /run/docker/plugins:/run/docker/plugins
+      - ./caddy/conf/:/consul/template/caddy/
+      - ./haproxy/conf/:/consul/template/haproxy/
+      - consul_ssh:/home/consul/.ssh
+      # as docker-compose is launched through a unit systemd from salt minion
+      # make the path predictable
+      - {{ deploy_path }}:/deploy
