@@ -2,6 +2,7 @@
 facilities to make test easy to read.
 """
 from . import cluster
+from docker import errors
 
 
 class ClusterTestCase:
@@ -69,3 +70,19 @@ class ClusterTestCase:
                 assert len(scheduled) == 1
             else:
                 assert len(scheduled) == 0
+
+    def assert_container_running_on(self, containers, nodes):
+        for name, node in self.cluster.nodes.items():
+            for container_name in containers:
+                try:
+                    container = node['docker_cli'].containers.get(
+                        container_name
+                    )
+                except errors.NotFound:
+                    container = None
+                    pass
+
+            if name in nodes:
+                assert container.status == 'running'
+            else:
+                assert container is None

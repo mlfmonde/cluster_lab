@@ -99,3 +99,9 @@ class WhenDeployingANewService(base_case.ClusterTestCase):
             self.application.name,
             self.master
         )
+
+    def test_service_containers_should_run(self):
+        self.assert_container_running_on(
+            [self.app.ct.anyblok, self.app.ct.dbserver, ],
+            [self.master]
+        )
