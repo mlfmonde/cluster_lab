@@ -19,31 +19,26 @@ class Cluster:
 
     def __init__(self):
         self.consul = consulate.Consul()
-        # TODO: parse from a config file
         self.nodes = dict(
             core1=dict(
                 docker_cli=docker.DockerClient(
                     base_url="unix:///tmp/docker_core1.sock"
                 ),
-                ip='192.168.122.193',
             ),
             core2=dict(
                 docker_cli=docker.DockerClient(
                     base_url="unix:///tmp/docker_core2.sock"
                 ),
-                ip='192.168.122.27',
             ),
             core3=dict(
                 docker_cli=docker.DockerClient(
                     base_url="unix:///tmp/docker_core3.sock"
                 ),
-                ip='192.168.122.32',
             ),
             core4=dict(
                 docker_cli=docker.DockerClient(
                     base_url="unix:///tmp/docker_core4.sock"
                 ),
-                ip='192.168.122 .82',
             ),
         )
 
