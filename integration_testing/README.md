@@ -1,5 +1,62 @@
 # Integration testing
 
+The goal of integration tests are to making sure each piece of the
+infrastructure are working well for a given version.
+
+
+## Setup test environment
+
+* Make sure you have [spawn 4 nodes with `salt-cloud` and they were properly
+  setup with `salt`](../README.md) that you can launch services on it
+
+* create a python3 virtualenv and install dependencies
+
+```bash
+
+```
+
+> *Note*: we may improve how test case access to consul, docker daemons, nodes
+> and so on... But at the time I'm writing each solutions got cons so
+> I avoid the question by setting up manually the environment before running
+> tests
+
+Before running those tests the test runner needs somme acces to diffenrent
+pieces:
+
+* To consul, you need to open an ssh tunnel that consul is accessible on
+  ``http://localhost:8500``:
+
+```bash
+ssh -L 8500:localhost:8500 core@192.168.122.32 -n -i salt/srv/base/ssh/core_id_rsa
+```
+
+* To each docker daemons, create an ssh tunnel to the socket for each nodes:
+
+```bash
+ssh -nNT -L /tmp/docker_core1.sock:/var/run/docker.sock -i ../salt/srv/base/ssh/core_id_rsa core@192.168.122.193
+ssh -nNT -L /tmp/docker_core2.sock:/var/run/docker.sock -i ../salt/srv/base/ssh/core_id_rsa core@192.168.122.27
+ssh -nNT -L /tmp/docker_core3.sock:/var/run/docker.sock -i ../salt/srv/base/ssh/core_id_rsa core@192.168.122.32
+ssh -nNT -L /tmp/docker_core4.sock:/var/run/docker.sock -i ../salt/srv/base/ssh/core_id_rsa core@192.168.122.82
+```
+
+* To request the test service, you may update you ``/etc/hosts`` file to add
+  the following entry (use any node IP address):
+
+```bash
+sudo echo "192.168.122.82  service.cluster.lab" >> /etc/hosts
+```
+
+
+## Running test case
+
+```bash
+(testvenv) : /cluster_lab/integration_testing$ run-contexts tests/ -v
+
+```
+
+## POCs
+
+### nuka
 
 > **Note**: not tested, since I've moved to core user with dedicated ssh key
 > you may condigure .ssh/config file to use the right private key
@@ -37,6 +94,10 @@ cd integration_testing/
 export DOCKER_HOST=unix://$(pwd)/../docker.sock
 python test_nuka.py  -v --debug
 ```
+
+### test infra
+
+> **Note**: you needs to bind docker.socket as in nuka's POC
 
 ```bash
 py.test  --hosts=core@192.168.122.45 test_infra.py 
