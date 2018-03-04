@@ -47,7 +47,7 @@ cluster-cluster-systemd-unit:
 
 cluster-deploy-directory:
   file.directory:
-    - name: /home/{{ username }}/deploy
+    - name: {{ rootfs }}/home/{{ username }}/deploy
     - user: 100
     - makedirs: True
 
