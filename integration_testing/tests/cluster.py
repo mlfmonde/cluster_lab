@@ -133,3 +133,7 @@ class Application(object):
     @property
     def app_key(self):
         return 'app/{}'.format(self.name)
+
+    @property
+    def volume_prefix(self):
+        return self.name.replace('.', '').replace('_', '') + '_'

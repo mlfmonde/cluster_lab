@@ -33,21 +33,21 @@ class WhenDeployingANewService(base_case.ClusterTestCase):
 
     def btrfs_pg_volume_should_exists_only_on_master(self):
         self.assert_volume_exists_only_on(
-            'clusterlabtestservicemaster89b06_dbdata',
+            self.application.volume_prefix + 'dbdata',
             self.master,
             kind='btrfs'
         )
 
     def btrfs_anyblok_volume_should_exists_on_master(self):
         self.assert_volume_exists_only_on(
-            'clusterlabtestservicemaster89b06_anyblok_data',
+            self.application.volume_prefix + 'anyblok_data',
             self.master,
             kind='btrfs'
         )
 
     def cache_volume_must_exists_on_master(self):
         self.assert_volume_exists_only_on(
-            'clusterlabtestservicemaster89b06_cache_data',
+            self.application.volume_prefix + 'cache_data',
             self.master,
             kind='local'
         )
@@ -62,35 +62,35 @@ class WhenDeployingANewService(base_case.ClusterTestCase):
     def purge_pg_volume_must_be_scheduled(self):
         self.assert_btrfs_scheduled(
             'purge',
-            'clusterlabtestservicemaster89b06_dbdata',
+            self.application.volume_prefix + 'dbdata',
             [self.master, self.slave],
         )
 
     def purge_anyblok_volume_must_be_scheduled(self):
         self.assert_btrfs_scheduled(
             'purge',
-            'clusterlabtestservicemaster89b06_anyblok_data',
+            self.application.volume_prefix + 'anyblok_data',
             [self.master, self.slave],
         )
 
     def replicate_pg_volume_must_be_scheduled(self):
         self.assert_btrfs_scheduled(
             'replicate',
-            'clusterlabtestservicemaster89b06_dbdata',
+            self.application.volume_prefix + 'dbdata',
             [self.master],
         )
 
     def replicate_anyblok_volume_must_be_scheduled(self):
         self.assert_btrfs_scheduled(
             'replicate',
-            'clusterlabtestservicemaster89b06_anyblok_data',
+            self.application.volume_prefix + 'anyblok_data',
             [self.master],
         )
 
     def non_btrfs_volume_should_not_get_schedule(self):
         self.assert_btrfs_scheduled(
             '',
-            'clusterlabtestservicemaster89b06_cache_data',
+            self.application.volume_prefix + 'cache_data',
             [],
         )
 
