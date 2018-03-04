@@ -11,6 +11,10 @@ services:
                 "handler": "/handler.py"}]
             }'
         CONSUL_BIND_INTERFACE: eth1
+    extra_hosts:
+      # to make consul checks happy, force using local haproxy as we
+      # have no dns resolution at the moment
+      - "service.cluster.lab:127.0.0.1"
     volumes:
       - consul_docker_cfg:/home/consul/.docker
       - /var/run/docker.sock:/var/run/docker.sock
