@@ -51,6 +51,11 @@ cluster-deploy-directory:
     - user: 100
     - makedirs: True
 
+docker-plugin-directory:
+  file.directory:
+    - name: {{ rootfs }}/var/run/docker/plugins
+    - dir_mode: 755
+
 cluster-docker-compose-lab:
   file.managed:
     - name: {{ rootfs }}/home/{{ username }}/cluster/docker-compose.lab.yml
