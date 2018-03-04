@@ -67,9 +67,17 @@ class ClusterTestCase:
                 volume
             )
             if name in nodes:
-                assert len(scheduled) == 1
+                assert len(scheduled) == 1, \
+                    "We expected 1 schedul {} on node {} for {} volume, " \
+                    "but {} were found.".format(
+                        kind, name, volume, len(scheduled)
+                    )
             else:
-                assert len(scheduled) == 0
+                assert len(scheduled) == 0, \
+                    "We expected 0 schedul {} on node {} for {} volume, " \
+                    "but {} were found.".format(
+                        kind, name, volume, len(scheduled)
+                    )
 
     def assert_container_running_on(self, containers, nodes):
         for name, node in self.cluster.nodes.items():
