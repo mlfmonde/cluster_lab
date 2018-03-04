@@ -4,14 +4,15 @@ from . import base_case
 from . import cluster
 
 
-class WhenDeployingANewService(base_case.ClusterTestCase):
+class WhenDeployingANewServiceMasterSlave(base_case.ClusterTestCase):
 
     def given_a_cluster_without_test_service(self):
         self.application = cluster.Application(
             'https://github.com/mlfmonde/cluster_lab_test_service',
             'master'
         )
-        self.master = 'core3'
+        self.cluster.cleanup_application(self.application)
+        self.master = 'core1'
         self.slave = 'core2'
 
     def becauseWeDeployTheService(self):
