@@ -1,4 +1,5 @@
 import requests
+import uuid
 
 from . import base_case
 from . import cluster
@@ -18,7 +19,20 @@ class WhenDeployingServiceMasterSlaveBecomesSlaveMaster(
             slave='core4',
             application=self.application,
         )
-        # TODO: write on system predictible data
+
+        session = requests.Session()
+        self.record_name = str(uuid.uuid4())
+        response = session.post(
+            'http://service.cluster.lab/example?name={}'.format(
+                self.record_name
+            )
+        )
+        assert 201 == response.status_code
+        self.record_location = response.headers['Location']
+        self.record_id = response.json()['id']
+        session.close()
+
+        # TODO: write on system predictible data on FS and cache volumes
         self.master = 'core4'
         self.slave = 'core3'
 
@@ -60,11 +74,13 @@ class WhenDeployingServiceMasterSlaveBecomesSlaveMaster(
             kind='local'
         )
 
-    def service_return_HTTP_code_200(self):
+    def service_should_return_freshly_created_report(self):
         '''we may add a dns server (bind9?) at some point to manage DNS'''
         session = requests.Session()
-        response = session.get('http://service.cluster.lab')
-        assert 200 == response.status_code
+        response = session.get(
+            'http://service.cluster.lab/example/{}'.format(self.record_id)
+        )
+        assert self.record_name == response.json()['name']
         session.close()
 
     def purge_pg_volume_must_be_scheduled(self):
