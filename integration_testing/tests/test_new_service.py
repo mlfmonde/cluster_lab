@@ -53,7 +53,7 @@ class WhenDeployingANewServiceMasterSlave(base_case.ClusterTestCase):
             kind='local'
         )
 
-    def service_return_HTTP_code_200(self):
+    def service_should_return_HTTP_code_200(self):
         '''we may add a dns server (bind9?) at some point to manage DNS'''
         session = requests.Session()
         response = session.get('http://service.cluster.lab')

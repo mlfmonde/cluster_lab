@@ -49,6 +49,11 @@ sudo echo "192.168.122.82  service.cluster.lab" >> /etc/hosts
 
 ## Running test case
 
+> *information*: test case are written in a [Context-Specification style](
+> http://contexts.readthedocs.io/en/v0.11.2/#about) using [Contexts](
+> http://contexts.readthedocs.io) python testing framework
+
+
 ```bash
 (testvenv) : /cluster_lab/integration_testing$ run-contexts tests/ -v
 
