@@ -12,7 +12,9 @@ infrastructure are working well for a given version.
 * create a python3 virtualenv and install dependencies
 
 ```bash
-
+python3 -m venv path/to/venv
+source path/to/venv/bin/activate
+pip install -r requirements.txt
 ```
 
 > *Note*: we may improve how test case access to consul, docker daemons, nodes
