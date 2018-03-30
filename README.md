@@ -227,6 +227,14 @@ apply states
 sudo salt '*' state.apply
 ```
 
+> **WARNING**: First time you are running states it can take longuer than the
+> timeout, wait about 5/10 minutes that images are pulled on each VM and
+> re-apply states
+
+> **Note**: You can apply states without waiting returns with ```--async```
+> params. Then to get details about running jobs refer to the [job runner in
+> the job management docuemntation](
+> https://docs.saltstack.com/en/latest/topics/jobs/index.html#the-jobs-runner)
 
 Then you can run salt commands likes:
 
@@ -240,6 +248,10 @@ salt 'c*' test.ping
 # get info from mingion
 
 salt 'cor*' grains.items
+
+# request specific grain information, here eth0
+sudo salt 'cor*' grains.get ip_interfaces:eth0
+
 
 # remove minion key
 salt-key -d core1
