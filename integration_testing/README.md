@@ -12,7 +12,9 @@ infrastructure are working well for a given version.
 * create a python3 virtualenv and install dependencies
 
 ```bash
-
+python3 -m venv path/to/venv
+source path/to/venv/bin/activate
+pip install -r requirements.txt
 ```
 
 > *Note*: we may improve how test case access to consul, docker daemons, nodes
@@ -22,6 +24,12 @@ infrastructure are working well for a given version.
 
 Before running those tests the test runner needs somme acces to diffenrent
 pieces:
+
+* list VM ips:
+
+```bash
+sudo salt '*' grains.get ip4_interfaces:eth0
+```
 
 * To consul, you need to open an ssh tunnel that consul is accessible on
   ``http://localhost:8500``:
@@ -55,9 +63,12 @@ sudo echo "192.168.122.82  service.cluster.lab" >> /etc/hosts
 
 
 ```bash
-(testvenv) : /cluster_lab/integration_testing$ run-contexts tests/ -v
-
+(testvenv) : /cluster_lab/integration_testing$ run-contexts tests/ -v -s
 ```
+
+> *Note*: Firsts time you run tests they are quite slow as the base image (
+> python:3-stretch) used in the test service is quite heavy and must be
+> downloaded on each nodes. This depend on your network band width.
 
 ## POCs
 

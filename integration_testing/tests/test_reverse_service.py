@@ -1,3 +1,4 @@
+import os
 import requests
 import uuid
 
@@ -22,9 +23,10 @@ class WhenDeployingServiceMasterSlaveBecomesSlaveMaster(
 
         session = requests.Session()
         self.record_name = str(uuid.uuid4())
+        self.record_content = str(uuid.uuid4())
         response = session.post(
-            'http://service.cluster.lab/example?name={}'.format(
-                self.record_name
+            'http://service.cluster.lab/example?name={}&content={}'.format(
+                self.record_name, self.record_content
             )
         )
         assert 201 == response.status_code
@@ -32,7 +34,6 @@ class WhenDeployingServiceMasterSlaveBecomesSlaveMaster(
         self.record_id = response.json()['id']
         session.close()
 
-        # TODO: write on system predictible data on FS and cache volumes
         self.master = 'core4'
         self.slave = 'core3'
 
@@ -74,14 +75,28 @@ class WhenDeployingServiceMasterSlaveBecomesSlaveMaster(
             kind='local'
         )
 
-    def service_should_return_freshly_created_report(self):
-        '''we may add a dns server (bind9?) at some point to manage DNS'''
+    def service_should_return_freshly_created_db_record(self):
         session = requests.Session()
         response = session.get(
             'http://service.cluster.lab/example/{}'.format(self.record_id)
         )
-        assert self.record_name == response.json()['name']
+        assert self.record_name == response.text
         session.close()
+
+    def anyblok_fsdata_should_be_there(self):
+        self.assert_file(
+            self.master,
+            os.path.join("/var/test_service/", self.record_name),
+            self.record_content
+        )
+
+    def anyblok_cache_directory_should_not_have_the_file(self):
+        file_path = os.path.join("/var/cache/", self.record_name)
+        self.assert_file(
+            self.master,
+            file_path,
+            'cat: {}: No such file or directory\n'.format(file_path),
+        )
 
     def purge_pg_volume_must_be_scheduled(self):
         self.assert_btrfs_scheduled(

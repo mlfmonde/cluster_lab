@@ -94,3 +94,13 @@ class ClusterTestCase:
                 assert container.status == 'running'
             else:
                 assert container is None
+
+    def assert_file(self, node_name, file, expected_content):
+        node = self.cluster.nodes.get(node_name)
+        container = node['docker_cli'].containers.get(
+            'clusterlabtestservicemaster89b06_anyblok_1'
+        )
+        content = container.exec_run(
+            'cat {}'.format(file)
+        ).output.decode('utf-8')
+        assert expected_content == content

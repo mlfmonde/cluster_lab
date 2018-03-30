@@ -10,9 +10,9 @@ from datetime import datetime
 from os import path
 from urllib import parse
 
-
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+DEFAULT_TIMEOUT = 600
 
 
 class Cluster:
@@ -44,7 +44,11 @@ class Cluster:
 
     # communicate with consul
     def deploy_and_wait(
-        self, master=None, slave=None, application=None, timeout=300,
+        self,
+        master=None,
+        slave=None,
+        application=None,
+        timeout=DEFAULT_TIMEOUT,
         event_consumed=None
     ):
         """Deploy a service waiting the end end of deployment before carry on
@@ -82,7 +86,9 @@ class Cluster:
             timeout
         )
 
-    def destroy_and_wait(self, application, timeout=300, event_consumed=None):
+    def destroy_and_wait(
+        self, application, timeout=DEFAULT_TIMEOUT, event_consumed=None
+    ):
         def deploy_finished(kv_app_before, kv_app_after):
             if not kv_app_after:
                 return True
@@ -128,6 +134,10 @@ class Cluster:
                 )
         # Make sure caddy and happroxy are reload and service registered
         time.sleep(3)
+        logger.info(
+            "Event %s takes %ss to consume",
+            event_name, (datetime.now() - start_date).seconds
+        )
         return event_id
 
     def get_app_from_kv(self, key):
