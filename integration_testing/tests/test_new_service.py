@@ -106,3 +106,6 @@ class WhenDeployingANewServiceMasterSlave(base_case.ClusterTestCase):
             [self.app.ct.anyblok, self.app.ct.dbserver, ],
             [self.master]
         )
+
+    def cleanup_destroy_service(self):
+        self.cluster.cleanup_application(self.application)

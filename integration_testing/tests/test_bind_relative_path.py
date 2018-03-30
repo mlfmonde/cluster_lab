@@ -61,3 +61,6 @@ class WhenDeployingAServiceThatBindARelativePath(
             "/tmp/test_bind_directory/test_bind_directory",
             "bind directory content\n"
         )
+
+    def cleanup_destroy_service(self):
+        self.cluster.cleanup_application(self.application)
