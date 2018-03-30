@@ -48,7 +48,7 @@ class WhenDeployingAServiceThatBindARelativePath(
 
     def bind_file_should_be_availaible_in_container(self):
         self.assert_file(
-            'core1',
+            self.master,
             self.app.ct.anyblok,
             "/tmp/test_bind_file",
             "bind file content\n"
@@ -56,7 +56,7 @@ class WhenDeployingAServiceThatBindARelativePath(
 
     def bind_directory_should_be_availaible_in_container(self):
         self.assert_file(
-            'core1',
+            self.master,
             self.app.ct.anyblok,
             "/tmp/test_bind_directory/test_bind_directory",
             "bind directory content\n"
