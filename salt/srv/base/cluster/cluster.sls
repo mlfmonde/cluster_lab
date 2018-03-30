@@ -1,6 +1,6 @@
 {% set username = "core" %}
 {% set cluster_repo = 'https://github.com/petrus-v/cluster' %}
-{% set cluster_rev = 'master' %}
+{% set cluster_rev = 'bind_relative_path' %}
 {% set rootfs = '/rootfs' %}
 {% set compose_binary = '/opt/bin/docker-compose' %}
 {% set docker_volumes_dir = '/var/lib/docker/volumes' %}
@@ -47,7 +47,7 @@ cluster-cluster-systemd-unit:
 
 cluster-deploy-directory:
   file.directory:
-    - name: {{ rootfs }}/home/{{ username }}/deploy
+    - name: {{ rootfs }}/deploy
     - user: 100
     - makedirs: True
 
@@ -61,8 +61,6 @@ cluster-docker-compose-lab:
     - name: {{ rootfs }}/home/{{ username }}/cluster/docker-compose.lab.yml
     - source: salt://cluster/docker-compose.lab.yml.jinja
     - template: jinja
-    - defaults:
-        deploy_path: /home/{{ username }}/deploy
     - require:
       - git: cluster-code
       - file: cluster-deploy-directory

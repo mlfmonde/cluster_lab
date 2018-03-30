@@ -12,6 +12,7 @@ At some point we use to get 2 issues while deploying this kind of services:
   source (on the host machine) and targe (in the container)
 """
 import requests
+import time
 
 from . import base_case
 from . import cluster
@@ -32,9 +33,10 @@ class WhenDeployingAServiceThatBindARelativePath(
     def becauseWeDeployTheService(self):
         self.cluster.deploy_and_wait(
             master=self.master,
-            slave=self.slave,
             application=self.application,
         )
+        # wait a bit more to ensure service finish to setup the db
+        time.sleep(20)
         self.app = self.cluster.get_app_from_kv(self.application.app_key)
 
     def service_should_return_HTTP_code_200(self):
@@ -43,3 +45,19 @@ class WhenDeployingAServiceThatBindARelativePath(
         response = session.get('http://service.cluster.lab')
         assert 200 == response.status_code
         session.close()
+
+    def bind_file_should_be_availaible_in_container(self):
+        self.assert_file(
+            'core1',
+            self.app.ct.anyblok,
+            "/tmp/test_bind_file",
+            "bind file content\n"
+        )
+
+    def bind_directory_should_be_availaible_in_container(self):
+        self.assert_file(
+            'core1',
+            self.app.ct.anyblok,
+            "/tmp/test_bind_directory/test_bind_directory",
+            "bind directory content\n"
+        )
