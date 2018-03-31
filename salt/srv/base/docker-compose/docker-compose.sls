@@ -1,4 +1,4 @@
-{% set compose_version = '1.11.2' %}
+{% set compose_version = '1.20.1' %}
 {% set compose_path = '/opt/bin/docker-compose' %}
 {% set rootfs = '/rootfs' %}
 

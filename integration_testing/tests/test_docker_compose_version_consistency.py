@@ -8,6 +8,7 @@ Si if the service is properly working on this dedicated branch that should
 be fine
 """
 import requests
+import time
 
 from . import base_case
 from . import cluster
@@ -20,7 +21,7 @@ class WhenDeployingAServiceThatCopySymlinkWhileBuildingImage(
     def given_a_cluster_without_test_service(self):
         self.application = cluster.Application(
             'https://github.com/mlfmonde/cluster_lab_test_service',
-            'docker_copy_symlink_working_on_ct_only'
+            'build_copy_symlink'
         )
         self.cluster.cleanup_application(self.application)
         self.master = 'core1'
@@ -28,9 +29,10 @@ class WhenDeployingAServiceThatCopySymlinkWhileBuildingImage(
     def becauseWeDeployTheService(self):
         self.cluster.deploy_and_wait(
             master=self.master,
-            slave=self.slave,
             application=self.application,
         )
+        # give a chance to initialized anyblok db
+        time.sleep(15)
         self.app = self.cluster.get_app_from_kv(self.application.app_key)
 
     def service_should_return_HTTP_code_200(self):
@@ -39,3 +41,6 @@ class WhenDeployingAServiceThatCopySymlinkWhileBuildingImage(
         response = session.get('http://service.cluster.lab')
         assert 200 == response.status_code
         session.close()
+
+    def cleanup_destroy_service(self):
+        self.cluster.cleanup_application(self.application)
