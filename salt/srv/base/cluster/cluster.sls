@@ -1,6 +1,6 @@
 {% set username = "core" %}
 {% set cluster_repo = 'https://github.com/petrus-v/cluster' %}
-{% set cluster_rev = 'bind_relative_path' %}
+{% set cluster_rev = 'consul1.0_and_newerversions' %}
 {% set rootfs = '/rootfs' %}
 {% set compose_binary = '/opt/bin/docker-compose' %}
 {% set docker_volumes_dir = '/var/lib/docker/volumes' %}
