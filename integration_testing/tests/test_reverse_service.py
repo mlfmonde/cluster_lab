@@ -1,5 +1,6 @@
 import os
 import requests
+import time
 import uuid
 
 from . import base_case
@@ -24,6 +25,8 @@ class WhenDeployingServiceMasterSlaveBecomesSlaveMaster(
         session = requests.Session()
         self.record_name = str(uuid.uuid4())
         self.record_content = str(uuid.uuid4())
+        # Let time to db initialisation
+        time.sleep(15)
         response = session.post(
             'http://service.cluster.lab/example?name={}&content={}'.format(
                 self.record_name, self.record_content
@@ -86,6 +89,7 @@ class WhenDeployingServiceMasterSlaveBecomesSlaveMaster(
     def anyblok_fsdata_should_be_there(self):
         self.assert_file(
             self.master,
+            self.app.ct.anyblok,
             os.path.join("/var/test_service/", self.record_name),
             self.record_content
         )
@@ -94,6 +98,7 @@ class WhenDeployingServiceMasterSlaveBecomesSlaveMaster(
         file_path = os.path.join("/var/cache/", self.record_name)
         self.assert_file(
             self.master,
+            self.app.ct.anyblok,
             file_path,
             'cat: {}: No such file or directory\n'.format(file_path),
         )
@@ -144,3 +149,6 @@ class WhenDeployingServiceMasterSlaveBecomesSlaveMaster(
             [self.app.ct.anyblok, self.app.ct.dbserver, ],
             [self.master]
         )
+
+    def cleanup_destroy_service(self):
+        self.cluster.cleanup_application(self.application)

@@ -95,12 +95,22 @@ class ClusterTestCase:
             else:
                 assert container is None
 
-    def assert_file(self, node_name, file, expected_content):
-        node = self.cluster.nodes.get(node_name)
-        container = node['docker_cli'].containers.get(
-            'clusterlabtestservicemaster89b06_anyblok_1'
-        )
-        content = container.exec_run(
-            'cat {}'.format(file)
+    def assert_file(self, node, container, path, expected_content):
+        """Make sure expected content is present in a container:
+
+        :param node     : node where service is running
+        :param container: container name
+        :param path     : path to the file (inside the docker container) to assert
+                          content
+        :param expected_content: content to assert
+        """
+
+        content = self.cluster.nodes.get(node)['docker_cli'].containers.get(
+            container
+        ).exec_run(
+            'cat {}'.format(path)
         ).output.decode('utf-8')
-        assert expected_content == content
+        assert expected_content == content,\
+            "Content not matched, expected: {} - got {}".format(
+                expected_content, content
+            )

@@ -15,13 +15,3 @@ services:
       # to make consul checks happy, force using local haproxy as we
       # have no dns resolution at the moment
       - "service.cluster.lab:127.0.0.1"
-    volumes:
-      - consul_docker_cfg:/home/consul/.docker
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /run/docker/plugins:/run/docker/plugins
-      - ./caddy/conf/:/consul/template/caddy/
-      - ./haproxy/conf/:/consul/template/haproxy/
-      - consul_ssh:/home/consul/.ssh
-      # as docker-compose is launched through a unit systemd from salt minion
-      # make the path predictable
-      - {{ deploy_path }}:/deploy
