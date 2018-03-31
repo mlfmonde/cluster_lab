@@ -1,5 +1,6 @@
 import os
 import requests
+import time
 import uuid
 
 from . import base_case
@@ -24,6 +25,8 @@ class WhenDeployingServiceMasterSlaveBecomesSlaveMaster(
         session = requests.Session()
         self.record_name = str(uuid.uuid4())
         self.record_content = str(uuid.uuid4())
+        # Let time to db initialisation
+        time.sleep(15)
         response = session.post(
             'http://service.cluster.lab/example?name={}&content={}'.format(
                 self.record_name, self.record_content
