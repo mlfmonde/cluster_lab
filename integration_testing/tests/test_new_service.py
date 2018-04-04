@@ -1,4 +1,5 @@
 import requests
+import time
 
 from . import base_case
 from . import cluster
@@ -21,6 +22,8 @@ class WhenDeployingANewServiceMasterSlave(base_case.ClusterTestCase):
             slave=self.slave,
             application=self.application,
         )
+        # give a chance to let anyblok setting up its db
+        time.sleep(15)
         self.app = self.cluster.get_app_from_kv(self.application.app_key)
 
     def a_key_must_be_in_the_kv_store(self):
