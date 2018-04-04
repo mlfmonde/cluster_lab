@@ -15,6 +15,11 @@ sudo hostnamectl set-hostname '{{ vm['name'] }}'
 # mapping dbus to access to systemctl from container
 docker run -d  --privileged \
     --network host \
+    --restart unless-stopped \
+    --name salt-minion \
+    -v /lib/systemd/system:/lib/systemd/system \
+    -v /usr/lib/systemd/system:/usr/lib/systemd/system \
+    -v /etc/systemd/system:/etc/systemd/system \
     -v /home/core/salt:/etc/salt \
     -v /var/run/dbus:/var/run/dbus \
     -v /var/run/docker.sock:/var/run/docker.sock \

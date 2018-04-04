@@ -1,6 +1,6 @@
 {% set username = "core" %}
-{% set cluster_repo = 'https://github.com/petrus-v/cluster' %}
-{% set cluster_rev = 'consul1.0_and_newerversions' %}
+{% set cluster_repo = 'https://github.com/mlfmonde/cluster' %}
+{% set cluster_rev = 'master' %}
 {% set rootfs = '/rootfs' %}
 {% set compose_binary = '/opt/bin/docker-compose' %}
 {% set docker_volumes_dir = '/var/lib/docker/volumes' %}
@@ -12,6 +12,7 @@ cluster-code:
         - target: {{ rootfs }}/home/{{ username }}/cluster
         - rev: {{ cluster_rev }}
         - branch: testing
+        - force_reset: True
         - force_checkout: True
 
 # we could user docker to run containers from minion container
@@ -29,6 +30,7 @@ cluster-buttervolume-systemd-unit:
 #        type: "simple"
         cmd_start: "up --build"
         cmd_stop: "stop"
+        requires: docker.service
 #        remain_after_exit: "no"
 
 cluster-cluster-systemd-unit:
@@ -37,6 +39,7 @@ cluster-cluster-systemd-unit:
     - source: salt://cluster/docker-compose-unit.jinja
     - template: jinja
     - defaults:
+        requires: docker.service buttervolume.service
         working_directory: /home/{{ username }}/cluster
         compose_bin: {{ compose_binary }}
         compose_options: "-f docker-compose.yml -f docker-compose.lab.yml"
@@ -65,64 +68,60 @@ cluster-docker-compose-lab:
       - git: cluster-code
       - file: cluster-deploy-directory
 
-cluster_reload_systemd:
-  cmd.run:
-    - name: systemctl daemon-reload
-    - onchanges:
-      - file: cluster-buttervolume-systemd-unit
-      - file: cluster-cluster-systemd-unit
-
 cluster_buttervolume_service_started:
-  cmd.run:
-    - name: systemctl start buttervolume.service
-    - unless:
-      - systemctl status buttervolume.service
+  service.running:
+    - name: buttervolume.service
+    - enable: True
+    - reload: True
+#    - onchanges:
+#      - file: cluster-buttervolume-systemd-unit
     - require:
       - file: cluster-buttervolume-systemd-unit
       - git: cluster-code
-      - cmd: btrfs_subvolume_mount_volumes
-      - cmd: cluster_reload_systemd
+      - service: btrfs_subvolume_mount_volumes
       - file: docker-compose-executable
 
 cluster_cluster_service_started:
-  cmd.run:
-    - name: systemctl start cluster.service
-    - unless:
-      - systemctl status cluster.service
+  service.running:
+    - name: cluster.service
+    - enable: True
+    - reload: True
+#    - onchanges:
+#      - file: cluster-cluster-systemd-unit
     - require:
       - git: cluster-code
-      - cmd: cluster_buttervolume_service_started
-      - cmd: cluster_reload_systemd
+      - service: btrfs_subvolume_mount_volumes
+      - service: cluster_buttervolume_service_started
       - file: cluster-cluster-systemd-unit
       - file: cluster-docker-compose-lab
 
 cluster_buttervolume_ssh_private_key:
   file.managed:
-    - name: {{ minion_btrfs_mount_point }}/volumes/buttervolume_buttervolume_ssh/_data/id_rsa
+    - name: {{ rootfs }}{{ docker_volumes_dir }}/buttervolume_buttervolume_ssh/_data/id_rsa
     - source: salt://ssh/buttervolume_id_rsa
     - mode: 400
     - require:
-      - cmd: cluster_buttervolume_service_started
+      - service: btrfs_subvolume_mount_volumes
 
 cluster_buttervolume_ssh_pub_key:
   file.managed:
-    - name: {{ minion_btrfs_mount_point }}/volumes/buttervolume_buttervolume_ssh/_data/id_rsa.pub
+    - name: {{ rootfs }}{{ docker_volumes_dir }}/buttervolume_buttervolume_ssh/_data/id_rsa.pub
     - source: salt://ssh/buttervolume_id_rsa.pub
     - require:
-      - cmd: cluster_buttervolume_service_started
+      - service: btrfs_subvolume_mount_volumes
 
 cluster_buttervolume_ssh_authorized_keys:
   file.managed:
-    - name: {{ minion_btrfs_mount_point }}/volumes/buttervolume_buttervolume_ssh/_data/authorized_keys
+    - name: {{ rootfs }}{{ docker_volumes_dir }}/buttervolume_buttervolume_ssh/_data/authorized_keys
     - source: salt://ssh/buttervolume_id_rsa.pub
     - require:
-      - cmd: cluster_buttervolume_service_started
+      - service: btrfs_subvolume_mount_volumes
 
 cluster_buttervolume_ssh_config:
   file.managed:
-    - name: {{ minion_btrfs_mount_point }}/volumes/buttervolume_buttervolume_ssh/_data/config
+    - name: {{ rootfs }}{{ docker_volumes_dir }}/buttervolume_buttervolume_ssh/_data/config
     - contents: |
         Host *
           StrictHostKeyChecking no
     - require:
-      - cmd: cluster_buttervolume_service_started
+      - service: btrfs_subvolume_mount_volumes

@@ -2,6 +2,7 @@ version: '3.0'
 services:
 
   consul:
+    restart: ""
     command: ["agent", "-server", {% for server, addrs in salt['mine.get']('*', 'network.ip_addrs') | dictsort() %}"-retry-join={{ addrs[0] }}", {% endfor %}"-ui", "-bootstrap-expect=4"]
     environment:
         CONSUL_LOCAL_CONFIG: '{
@@ -16,3 +17,9 @@ services:
       # to make consul checks happy, force using local haproxy as we
       # have no dns resolution at the moment
       - "service.cluster.lab:127.0.0.1"
+
+  caddy:
+    restart: ""
+
+  haproxy:
+    restart: ""

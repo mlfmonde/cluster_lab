@@ -1,8 +1,8 @@
 {% set rootfs = '/rootfs' %}
 {% set dev1 = '/dev/vdb' %}
 {% set dev2 = '/dev/vdc' %}
-{% set btrfs_volumes_dir = '/var/lib/docker/volumes' %}
-{% set btrfs_snapshots_dir = '/var/lib/docker/snapshots' %}
+{% set btrfs_volumes_dir = '/var/lib/buttervolume/volumes' %}
+{% set btrfs_snapshots_dir = '/var/lib/buttervolume/snapshots' %}
 {% set minion_btrfs_mount_point = '/mnt/local' %}
 
 btrfs_format:
@@ -35,7 +35,7 @@ btrfs_subvolume_create_volumes:
 
 btrfs_systemd_mount_unit_snapshots:
   file.managed:
-    - name: {{ rootfs }}/etc/systemd/system/var-lib-docker-snapshots.mount
+    - name: {{ rootfs }}/etc/systemd/system/var-lib-buttervolume-snapshots.mount
     - source: salt://btrfs/btrfs-subvolume.mount.jinja
     - template: jinja
     - defaults:
@@ -45,7 +45,7 @@ btrfs_systemd_mount_unit_snapshots:
 
 btrfs_systemd_mount_unit_volumes:
   file.managed:
-    - name: {{ rootfs }}/etc/systemd/system/var-lib-docker-volumes.mount
+    - name: {{ rootfs }}/etc/systemd/system/var-lib-buttervolume-volumes.mount
     - source: salt://btrfs/btrfs-subvolume.mount.jinja
     - template: jinja
     - defaults:
@@ -53,27 +53,18 @@ btrfs_systemd_mount_unit_volumes:
         device: {{ dev1 }}
         mount_point: {{ btrfs_volumes_dir }}
 
-btrfs_reload_systemd:
-  cmd.run:
-    - name: systemctl daemon-reload
-    - onchanges:
-        - file: btrfs_systemd_mount_unit_snapshots
-        - file: btrfs_systemd_mount_unit_volumes
-
 btrfs_subvolume_mount_snapshots:
-  cmd.run:
-    - name: systemctl start var-lib-docker-snapshots.mount
-    - unless:
-      - systemctl status var-lib-docker-snapshots.mount
-    - require:
+  service.running:
+    - name: var-lib-buttervolume-snapshots.mount
+    - enable: True
+    - reload: True
+    - onchanges:
       - file: btrfs_systemd_mount_unit_snapshots
-      - cmd: btrfs_reload_systemd
 
 btrfs_subvolume_mount_volumes:
-  cmd.run:
-    - name: systemctl start var-lib-docker-volumes.mount
-    - unless:
-      - systemctl status var-lib-docker-volumes.mount
-    - require:
+  service.running:
+    - name: var-lib-buttervolume-volumes.mount
+    - enable: True
+    - reload: True
+    - onchanges:
       - file: btrfs_systemd_mount_unit_volumes
-      - cmd: btrfs_reload_systemd

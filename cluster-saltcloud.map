@@ -2,20 +2,28 @@ coreos:
   - core1:
       minion:
         log_level: debug
+        providers:
+          service: systemd
       grains:
         cheese: beaufort
   - core2:
       minion:
         log_level: warn
+        providers:
+          service: systemd
       grains:
         cheese: morbier
   - core3:
       minion:
         log_level: warn
+        providers:
+          service: systemd
       grains:
         cheese: comte
   - core4:
       minion:
         log_level: warn
+        providers:
+          service: systemd
       grains:
         cheese: brie
