@@ -159,6 +159,20 @@ class Cluster:
             container = node['docker_cli'].containers.get(
                 'buttervolume_plugin_1'
             )
+
+            def filter_schedule(schedule):
+                if schedule.volume.startswith("clusterlabtestservice"):
+                    return True
+
+            scheduled_to_cleanup = self.get_scheduled(
+                container, filter_schedule
+            )
+
+            for schedule in scheduled_to_cleanup:
+                schedule.minutes = 0
+                container.exec_run('buttervolume schedule {}'.format(
+                    str(schedule))
+                )
             container.exec_run(
                 'bash -c "'
                 'btrfs subvolume delete /var/lib/docker/snapshots/{}*'
@@ -166,6 +180,45 @@ class Cluster:
                     application.volume_prefix
                 )
             )
+            container = node['docker_cli'].containers.get(
+                'cluster_consul_1'
+            )
+            container.exec_run(
+                'bash -c "rm -rf /deploy/{}*"'.format(
+                    "cluster_lab_test_service"
+                )
+            )
+
+    def get_scheduled(self, container, scheduled_filter, *args, **kwargs):
+        """Get scheduled given a buttervolume container
+
+        :param container: buttervolume container (docker api)
+        :param scheduled_filter: a method to filter schedule, wich must
+                                 return ``True`` to add the schedul to the
+                                 list and ``False`` to ignore it::
+
+            def allow_all_filter(schedule, *args, **kwargs):
+                '''In this example no thing filtered, all schedul will be
+                in the returned list'''
+                return True
+
+        :param args: args that are forward to the filtered method
+        :param kwargs: kwargs forwared to the filterd method
+        :return: a list of schedule
+        """
+        if not scheduled_filter:
+            def default_filter(schedule, *args, **kwargs):
+                return True
+            scheduled_filter = default_filter
+        return [
+            s for s in [
+                Scheduled.from_str(s) for s in container.exec_run(
+                    'buttervolume scheduled'
+                ).output.decode('utf-8').split('\n') if s
+            ] if scheduled_filter(s, *args, **kwargs)
+        ]
+
+
 
 
 def _json_object_hook(d):
@@ -176,6 +229,60 @@ def json2obj(data):
     if not data:
         return None
     return json.loads(data, object_hook=_json_object_hook)
+
+
+class Scheduled(object):
+    """
+    """
+
+    _kind = None
+    _kind_params = None
+    _volume = None
+    _minutes = None
+
+    def __init__(self, kind, kind_params, volume, minutes):
+        self._kind = kind
+        self._kind_params = kind_params
+        self._volume = volume
+        self._minutes = minutes
+
+    @property
+    def kind(self):
+        return self._kind
+
+    @property
+    def kind_params(self):
+        return self._kind_params
+
+    @property
+    def minutes(self):
+        return self._mintes
+
+    @minutes.setter
+    def minutes(self, value):
+        self._mintes = value
+
+    @property
+    def volume(self):
+        return self._volume
+
+    @staticmethod
+    def from_str(scheduled):
+        schedule = scheduled.split(" ")
+        if ':' in schedule[0]:
+            kind_and_params = schedule[0].split(":")
+            kind = kind_and_params[0]
+            params = ":".join([str(s) for s in kind_and_params[1:]])
+        else:
+            kind, params = schedule[0], None
+        return Scheduled(kind, params, schedule[2], schedule[1])
+
+    def __str__(self):
+        if self._kind_params:
+            kind = ":".join([self._kind, self._kind_params])
+        else:
+            kind = self._kind
+        return "{} {} {}".format(kind, self._minutes, self._volume)
 
 
 class Application(object):
