@@ -93,8 +93,8 @@ class ClusterTestCase:
 
         :param node     : node where service is running
         :param container: container name
-        :param path     : path to the file (inside the docker container) to assert
-                          content
+        :param path     : path to the file (inside the docker container) to
+                          assert content
         :param expected_content: content to assert
         """
 

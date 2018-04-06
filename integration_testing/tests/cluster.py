@@ -219,8 +219,6 @@ class Cluster:
         ]
 
 
-
-
 def _json_object_hook(d):
     return namedtuple('X', d.keys())(*d.values())
 
