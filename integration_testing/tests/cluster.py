@@ -143,12 +143,34 @@ class Cluster:
     def get_app_from_kv(self, key):
         return json2obj(self.consul.kv.get(key))
 
-    # Communicate with btrfs docker plugin
-    def scheduled(self, volume_name, kind=None):
-        """get btrfs scheduled definition for the given volume filtered by
-        kind (purge, sync, replicate, ... ) if provide"""
+    def wait_logs(
+        self, node_name, container, message, timeout=DEFAULT_TIMEOUT
+    ):
+        node = self.nodes.get(node_name)
+        container = node['docker_cli'].containers.get(
+            container
+        )
+
+        start_date = datetime.now()
+        for line in container.logs(stream=True):
+            if message in line.decode('utf-8'):
+                logging.info(
+                    "%s where found in line %s (in %s s)",
+                    message, line, (datetime.now() - start_date).seconds
+                )
+                break
+
+            if (datetime.now() - start_date).seconds > timeout:
+                # we could add a setting to raise an Error, don't needs now
+                logging.warning(
+                    "We haven't found %s in the given time (%s s)",
+                    message,
+                    timeout
+                )
+                break
 
     def cleanup_application(self, application):
+        logging.info("start cleanup applications")
         service = self.consul.catalog.service(
             application.name
         )

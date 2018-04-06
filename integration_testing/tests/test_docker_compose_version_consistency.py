@@ -32,8 +32,15 @@ class WhenDeployingAServiceThatCopySymlinkWhileBuildingImage(
             application=self.application,
         )
         # give a chance to initialized anyblok db
-        time.sleep(15)
         self.app = self.cluster.get_app_from_kv(self.application.app_key)
+        self.cluster.wait_logs(
+            self.master, self.app.ct.anyblok, '--wsgi-host 0.0.0.0', timeout=30
+        )
+        # We are happy that anyblok started but we expected anyblok service
+        # ready to handler requests which needs more time... think
+        # about the best solution to test that service is ready to handle
+        # resquests
+        time.sleep(3)
 
     def service_should_return_HTTP_code_200(self):
         '''we may add a dns server (bind9?) at some point to manage DNS'''
