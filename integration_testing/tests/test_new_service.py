@@ -1,4 +1,6 @@
+import os
 import requests
+import subprocess
 import time
 
 from . import base_case
@@ -69,6 +71,20 @@ class WhenDeployingANewServiceMasterSlave(base_case.ClusterTestCase):
         response = session.get('http://service.cluster.lab')
         assert 200 == response.status_code
         session.close()
+
+    def anyblok_ssh_should_be_accessible(self):
+        assert subprocess.check_output([
+            'ssh',
+            'root@{}'.format("service.cluster.lab"),
+            '-p',
+            '2244',
+            '-i',
+            os.path.join(os.path.dirname(__file__), 'id_rsa_anyblok_ssh'),
+            '-o',
+            'StrictHostKeyChecking=no',
+            '-C',
+            'echo "test ssh"'
+        ]).decode('utf-8') == "test ssh\n"
 
     def purge_pg_volume_must_be_scheduled(self):
         self.assert_btrfs_scheduled(

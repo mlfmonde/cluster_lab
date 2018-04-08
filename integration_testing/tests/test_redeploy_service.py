@@ -1,5 +1,6 @@
 import os
 import requests
+import subprocess
 import time
 import uuid
 
@@ -101,6 +102,20 @@ class WhenDeployingServiceWithSameSlaveMaster(
         )
         assert self.record_name == response.text
         session.close()
+
+    def anyblok_ssh_should_be_accessible(self):
+        assert subprocess.check_output([
+            'ssh',
+            'root@{}'.format("service.cluster.lab"),
+            '-p',
+            '2244',
+            '-i',
+            os.path.join(os.path.dirname(__file__), 'id_rsa_anyblok_ssh'),
+            '-o',
+            'StrictHostKeyChecking=no',
+            '-C',
+            'cat /anyblok_data/{}'.format(self.record_name)
+        ]).decode('utf-8') == self.record_content
 
     def anyblok_fsdata_should_be_there(self):
         self.assert_file(

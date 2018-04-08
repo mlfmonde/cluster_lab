@@ -18,8 +18,13 @@ services:
       # have no dns resolution at the moment
       - "service.cluster.lab:127.0.0.1"
 
-  caddy:
-    restart: ""
-
   haproxy:
+    restart: ""
+    ports:
+      - "80:80"
+      - "443:443"
+      - "1443:1443"
+      - "2244:2244"
+
+  caddy:
     restart: ""

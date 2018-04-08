@@ -42,7 +42,7 @@ cluster-cluster-systemd-unit:
         requires: docker.service buttervolume.service
         working_directory: /home/{{ username }}/cluster
         compose_bin: {{ compose_binary }}
-        compose_options: "-f docker-compose.yml -f docker-compose.lab.yml"
+        compose_options: "-f docker-compose.yml -f docker-compose.override.yml"
 #        type: "oneshot"
         cmd_start: "up --build"
         cmd_stop: "stop"
@@ -61,7 +61,7 @@ docker-plugin-directory:
 
 cluster-docker-compose-lab:
   file.managed:
-    - name: {{ rootfs }}/home/{{ username }}/cluster/docker-compose.lab.yml
+    - name: {{ rootfs }}/home/{{ username }}/cluster/docker-compose.override.yml
     - source: salt://cluster/docker-compose.lab.yml.jinja
     - template: jinja
     - require:

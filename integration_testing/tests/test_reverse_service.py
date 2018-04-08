@@ -1,5 +1,6 @@
 import os
 import requests
+import subprocess
 import time
 import uuid
 
@@ -109,6 +110,20 @@ class WhenDeployingServiceMasterSlaveBecomesSlaveMaster(
             os.path.join("/var/test_service/", self.record_name),
             self.record_content
         )
+
+    def anyblok_ssh_should_be_accessible(self):
+        assert subprocess.check_output([
+            'ssh',
+            'root@{}'.format("service.cluster.lab"),
+            '-p',
+            '2244',
+            '-i',
+            os.path.join(os.path.dirname(__file__), 'id_rsa_anyblok_ssh'),
+            '-o',
+            'StrictHostKeyChecking=no',
+            '-C',
+            'cat /anyblok_data/{}'.format(self.record_name)
+        ]).decode('utf-8') == self.record_content
 
     def anyblok_cache_directory_should_not_have_the_file(self):
         file_path = os.path.join("/var/cache/", self.record_name)

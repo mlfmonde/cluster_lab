@@ -144,38 +144,55 @@ class Cluster:
         return json2obj(self.consul.kv.get(key))
 
     def wait_logs(
-        self, node_name, container, message, timeout=DEFAULT_TIMEOUT
+        self, node_name, container_name, message, timeout=DEFAULT_TIMEOUT
     ):
         node = self.nodes.get(node_name)
-        container = node['docker_cli'].containers.get(
-            container
-        )
 
         start_date = datetime.now()
-        for line in container.logs(stream=True):
-            if message in line.decode('utf-8'):
-                logging.info(
-                    "%s where found in line %s (in %s s)",
-                    message, line, (datetime.now() - start_date).seconds
-                )
-                break
+        carry_on = True
+        while carry_on:
+            container = node['docker_cli'].containers.get(
+                container_name
+            )
+            for line in container.logs(stream=True):
+                if message in line.decode('utf-8'):
+                    logging.info(
+                        "%s where found in line %s (in %s s)",
+                        message, line, (datetime.now() - start_date).seconds
+                    )
+                    carry_on = False
+                    break
 
-            if (datetime.now() - start_date).seconds > timeout:
-                # we could add a setting to raise an Error, don't needs now
-                logging.warning(
-                    "We haven't found %s in the given time (%s s)",
-                    message,
-                    timeout
-                )
-                break
+                if (datetime.now() - start_date).seconds > timeout:
+                    # we could add a setting to raise an Error, don't needs now
+                    logging.warning(
+                        "We haven't found %s in the given time (%s s)",
+                        message,
+                        timeout
+                    )
+                    carry_on = False
+                    break
 
     def cleanup_application(self, application):
         logging.info("start cleanup applications")
-        service = self.consul.catalog.service(
+        if self.get_app_from_kv(application.app_key):
+            self.destroy_and_wait(application)
+        services = self.consul.catalog.service(
             application.name
         )
-        if len(service) > 0:
-            self.destroy_and_wait(application)
+        if len(services) > 0:
+            for service in services:
+                self.consul.catalog.deregister(
+                    service['Node'],
+                    application.name
+                )
+
+        if self.consul.kv.get(
+            'maintenance/{}'.format(application.name), default="default123"
+        ) != "default123":
+            self.consul.kv.delete(
+                'maintenance/{}'.format(application.name)
+            )
         # remove old snapshots
         for name, node in self.nodes.items():
             container = node['docker_cli'].containers.get(
