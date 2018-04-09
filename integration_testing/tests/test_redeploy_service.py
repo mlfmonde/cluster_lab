@@ -125,18 +125,6 @@ class WhenDeployingServiceWithSameSlaveMaster(
             self.record_content
         )
 
-    def anyblok_cache_directory_should_be_filled(self):
-        """When redeploying master service on the same server docker volumes
-        (using local driver - non btrfs) are not removed
-        """
-        file_path = os.path.join("/var/cache/", self.record_name)
-        self.assert_file(
-            self.master,
-            self.app.ct.anyblok,
-            file_path,
-            '{}'.format(self.record_content),
-        )
-
     def purge_pg_volume_must_be_scheduled(self):
         self.assert_btrfs_scheduled(
             'purge',
