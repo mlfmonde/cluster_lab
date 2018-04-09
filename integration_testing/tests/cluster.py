@@ -184,7 +184,7 @@ class Cluster:
             for service in services:
                 self.consul.catalog.deregister(
                     service['Node'],
-                    application.name
+                    service_id=application.name
                 )
 
         if self.consul.kv.get(
@@ -258,13 +258,15 @@ class Cluster:
         ]
 
 
-def _json_object_hook(d):
-    return namedtuple('X', d.keys())(*d.values())
+def _json_object_hook(datum):
+    return namedtuple('X', datum.keys())(*datum.values())
 
 
 def json2obj(data):
     if not data:
         return None
+    # as ``-`` are not allow in class attr _json_object_hook would failed
+    data = data.replace('-', '_')
     return json.loads(data, object_hook=_json_object_hook)
 
 
