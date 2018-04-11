@@ -143,22 +143,75 @@ class Cluster:
     def get_app_from_kv(self, key):
         return json2obj(self.consul.kv.get(key))
 
-    # Communicate with btrfs docker plugin
-    def scheduled(self, volume_name, kind=None):
-        """get btrfs scheduled definition for the given volume filtered by
-        kind (purge, sync, replicate, ... ) if provide"""
+    def wait_logs(
+        self, node_name, container_name, message, timeout=DEFAULT_TIMEOUT
+    ):
+        node = self.nodes.get(node_name)
+
+        start_date = datetime.now()
+        carry_on = True
+        while carry_on:
+            container = node['docker_cli'].containers.get(
+                container_name
+            )
+            for line in container.logs(stream=True):
+                if message in line.decode('utf-8'):
+                    logging.info(
+                        "%s where found in line %s (in %s s)",
+                        message, line, (datetime.now() - start_date).seconds
+                    )
+                    carry_on = False
+                    break
+
+                if (datetime.now() - start_date).seconds > timeout:
+                    # we could add a setting to raise an Error, don't needs now
+                    logging.warning(
+                        "We haven't found %s in the given time (%s s)",
+                        message,
+                        timeout
+                    )
+                    carry_on = False
+                    break
 
     def cleanup_application(self, application):
-        service = self.consul.catalog.service(
+        logging.info("start cleanup applications")
+        if self.get_app_from_kv(application.app_key):
+            self.destroy_and_wait(application)
+        services = self.consul.catalog.service(
             application.name
         )
-        if len(service) > 0:
-            self.destroy_and_wait(application)
+        if len(services) > 0:
+            for service in services:
+                self.consul.catalog.deregister(
+                    service['Node'],
+                    service_id=application.name
+                )
+
+        if self.consul.kv.get(
+            'maintenance/{}'.format(application.name), default="default123"
+        ) != "default123":
+            self.consul.kv.delete(
+                'maintenance/{}'.format(application.name)
+            )
         # remove old snapshots
         for name, node in self.nodes.items():
             container = node['docker_cli'].containers.get(
                 'buttervolume_plugin_1'
             )
+
+            def filter_schedule(schedule):
+                if schedule.volume.startswith("clusterlabtestservice"):
+                    return True
+
+            scheduled_to_cleanup = self.get_scheduled(
+                container, filter_schedule
+            )
+
+            for schedule in scheduled_to_cleanup:
+                schedule.minutes = 0
+                container.exec_run('buttervolume schedule {}'.format(
+                    str(schedule))
+                )
             container.exec_run(
                 'bash -c "'
                 'btrfs subvolume delete /var/lib/docker/snapshots/{}*'
@@ -166,16 +219,109 @@ class Cluster:
                     application.volume_prefix
                 )
             )
+            container = node['docker_cli'].containers.get(
+                'cluster_consul_1'
+            )
+            container.exec_run(
+                'bash -c "rm -rf /deploy/{}*"'.format(
+                    "cluster_lab_test_service"
+                )
+            )
+
+    def get_scheduled(self, container, scheduled_filter, *args, **kwargs):
+        """Get scheduled given a buttervolume container
+
+        :param container: buttervolume container (docker api)
+        :param scheduled_filter: a method to filter schedule, wich must
+                                 return ``True`` to add the schedul to the
+                                 list and ``False`` to ignore it::
+
+            def allow_all_filter(schedule, *args, **kwargs):
+                '''In this example no thing filtered, all schedul will be
+                in the returned list'''
+                return True
+
+        :param args: args that are forward to the filtered method
+        :param kwargs: kwargs forwared to the filterd method
+        :return: a list of schedule
+        """
+        if not scheduled_filter:
+            def default_filter(schedule, *args, **kwargs):
+                return True
+            scheduled_filter = default_filter
+        return [
+            s for s in [
+                Scheduled.from_str(s) for s in container.exec_run(
+                    'buttervolume scheduled'
+                ).output.decode('utf-8').split('\n') if s
+            ] if scheduled_filter(s, *args, **kwargs)
+        ]
 
 
-def _json_object_hook(d):
-    return namedtuple('X', d.keys())(*d.values())
+def _json_object_hook(datum):
+    return namedtuple('X', datum.keys())(*datum.values())
 
 
 def json2obj(data):
     if not data:
         return None
+    # as ``-`` are not allow in class attr _json_object_hook would failed
+    data = data.replace('-', '_')
     return json.loads(data, object_hook=_json_object_hook)
+
+
+class Scheduled(object):
+    """
+    """
+
+    _kind = None
+    _kind_params = None
+    _volume = None
+    _minutes = None
+
+    def __init__(self, kind, kind_params, volume, minutes):
+        self._kind = kind
+        self._kind_params = kind_params
+        self._volume = volume
+        self._minutes = minutes
+
+    @property
+    def kind(self):
+        return self._kind
+
+    @property
+    def kind_params(self):
+        return self._kind_params
+
+    @property
+    def minutes(self):
+        return self._mintes
+
+    @minutes.setter
+    def minutes(self, value):
+        self._mintes = value
+
+    @property
+    def volume(self):
+        return self._volume
+
+    @staticmethod
+    def from_str(scheduled):
+        schedule = scheduled.split(" ")
+        if ':' in schedule[0]:
+            kind_and_params = schedule[0].split(":")
+            kind = kind_and_params[0]
+            params = ":".join([str(s) for s in kind_and_params[1:]])
+        else:
+            kind, params = schedule[0], None
+        return Scheduled(kind, params, schedule[2], schedule[1])
+
+    def __str__(self):
+        if self._kind_params:
+            kind = ":".join([self._kind, self._kind_params])
+        else:
+            kind = self._kind
+        return "{} {} {}".format(kind, self._minutes, self._volume)
 
 
 class Application(object):

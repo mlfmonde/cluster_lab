@@ -1,4 +1,7 @@
+import os
 import requests
+import subprocess
+import time
 
 from . import base_case
 from . import cluster
@@ -21,7 +24,16 @@ class WhenDeployingANewServiceMasterSlave(base_case.ClusterTestCase):
             slave=self.slave,
             application=self.application,
         )
+        # give a chance to let anyblok setting up its db
         self.app = self.cluster.get_app_from_kv(self.application.app_key)
+        self.cluster.wait_logs(
+            self.master, self.app.ct.anyblok, '--wsgi-host 0.0.0.0', timeout=30
+        )
+        # We are happy that anyblok started but we expected anyblok service
+        # ready to handler requests which needs more time... think
+        # about the best solution to test that service is ready to handle
+        # resquests
+        time.sleep(3)
 
     def a_key_must_be_in_the_kv_store(self):
         self.assert_key_exists(self.application.app_key)
@@ -59,6 +71,20 @@ class WhenDeployingANewServiceMasterSlave(base_case.ClusterTestCase):
         response = session.get('http://service.cluster.lab')
         assert 200 == response.status_code
         session.close()
+
+    def anyblok_ssh_should_be_accessible(self):
+        assert subprocess.check_output([
+            'ssh',
+            'root@{}'.format("service.cluster.lab"),
+            '-p',
+            '2244',
+            '-i',
+            os.path.join(os.path.dirname(__file__), 'id_rsa_anyblok_ssh'),
+            '-o',
+            'StrictHostKeyChecking=no',
+            '-C',
+            'echo "test ssh"'
+        ]).decode('utf-8') == "test ssh\n"
 
     def purge_pg_volume_must_be_scheduled(self):
         self.assert_btrfs_scheduled(

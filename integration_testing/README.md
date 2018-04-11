@@ -3,6 +3,16 @@
 The goal of integration tests are to making sure each piece of the
 infrastructure are working well for a given version.
 
+## TODO
+
+A reminder about nice things to do
+
+[ ] use images instead building Dockerfile
+[ ] Add Docker image registry proxy cache server to avoid pulling from internet
+    on each nodes:
+    - https://docs.docker.com/registry/recipes/mirror/#use-case-the-china-registry-mirror
+    - https://blog.docker.com/2015/10/registry-proxy-cache-docker-open-source/
+[ ] Find a proper way to know anyblok    db initialisation is over
 
 ## Setup test environment
 
@@ -35,7 +45,7 @@ sudo salt '*' grains.get ip4_interfaces:eth0
   ``http://localhost:8500``:
 
 ```bash
-ssh -L 8500:localhost:8500 core@192.168.122.32 -n -i salt/srv/base/ssh/core_id_rsa
+ssh -L 8500:localhost:8500 core@192.168.122.32 -i salt/srv/base/ssh/core_id_rsa
 ```
 
 * To each docker daemons, create an ssh tunnel to the socket for each nodes:

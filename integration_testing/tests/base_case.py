@@ -48,23 +48,16 @@ class ClusterTestCase:
         """Assert btrfs scheduled are present on given nodes and absent on
         others"""
 
-        def filter_scheduled(scheduled, start, end):
-            return [
-                s for s in scheduled if (
-                    s.startswith(start) and s.endswith(end)
-                )
-            ]
+        def filter_schedule(schedule, kind, volume):
+            if schedule.volume == volume and schedule.kind == kind:
+                return True
 
         for name, node in self.cluster.nodes.items():
             container = node['docker_cli'].containers.get(
                 'buttervolume_plugin_1'
             )
-            scheduled = filter_scheduled(
-                container.exec_run(
-                    'buttervolume scheduled'
-                ).output.decode('utf-8').split('\n'),
-                kind,
-                volume
+            scheduled = self.cluster.get_scheduled(
+                container, filter_schedule, kind, volume
             )
             if name in nodes:
                 assert len(scheduled) == 1, \
@@ -100,8 +93,8 @@ class ClusterTestCase:
 
         :param node     : node where service is running
         :param container: container name
-        :param path     : path to the file (inside the docker container) to assert
-                          content
+        :param path     : path to the file (inside the docker container) to
+                          assert content
         :param expected_content: content to assert
         """
 

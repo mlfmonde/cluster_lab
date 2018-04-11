@@ -8,18 +8,18 @@ from . import base_case
 from . import cluster
 
 
-class WhenDeployingServiceMasterSlaveBecomesSlaveMaster(
+class WhenDeployingServiceMasterSlaveUsingNewNodesAsSlaveMasterUsingHaproxy(
     base_case.ClusterTestCase
 ):
 
     def given_a_cluster_with_running_service(self):
         self.application = cluster.Application(
             'https://github.com/mlfmonde/cluster_lab_test_service',
-            'master'
+            'without_caddyfile'
         )
         self.cluster.cleanup_application(self.application)
         self.cluster.deploy_and_wait(
-            master='core3',
+            master='core1',
             slave='core4',
             application=self.application,
         )
@@ -46,8 +46,8 @@ class WhenDeployingServiceMasterSlaveBecomesSlaveMaster(
         self.record_id = response.json()['id']
         session.close()
 
-        self.master = 'core4'
-        self.slave = 'core3'
+        self.master = 'core3'
+        self.slave = 'core2'
 
     def becauseWeDeployTheService(self):
         self.cluster.deploy_and_wait(

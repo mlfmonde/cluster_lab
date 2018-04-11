@@ -8,7 +8,7 @@ from . import base_case
 from . import cluster
 
 
-class WhenDeployingServiceMasterSlaveBecomesSlaveMaster(
+class WhenDeployingServiceWithSameSlaveMaster(
     base_case.ClusterTestCase
 ):
 
@@ -19,11 +19,10 @@ class WhenDeployingServiceMasterSlaveBecomesSlaveMaster(
         )
         self.cluster.cleanup_application(self.application)
         self.cluster.deploy_and_wait(
-            master='core3',
-            slave='core4',
+            master='core2',
+            slave='core3',
             application=self.application,
         )
-
         app = self.cluster.get_app_from_kv(self.application.app_key)
         self.cluster.wait_logs(
             app.master, app.ct.anyblok, '--wsgi-host 0.0.0.0', timeout=30
@@ -36,6 +35,7 @@ class WhenDeployingServiceMasterSlaveBecomesSlaveMaster(
         session = requests.Session()
         self.record_name = str(uuid.uuid4())
         self.record_content = str(uuid.uuid4())
+        # Let time to db initialisation
         response = session.post(
             'http://service.cluster.lab/example?name={}&content={}'.format(
                 self.record_name, self.record_content
@@ -46,7 +46,7 @@ class WhenDeployingServiceMasterSlaveBecomesSlaveMaster(
         self.record_id = response.json()['id']
         session.close()
 
-        self.master = 'core4'
+        self.master = 'core2'
         self.slave = 'core3'
 
     def becauseWeDeployTheService(self):
@@ -103,14 +103,6 @@ class WhenDeployingServiceMasterSlaveBecomesSlaveMaster(
         assert self.record_name == response.text
         session.close()
 
-    def anyblok_fsdata_should_be_there(self):
-        self.assert_file(
-            self.master,
-            self.app.ct.anyblok,
-            os.path.join("/var/test_service/", self.record_name),
-            self.record_content
-        )
-
     def anyblok_ssh_should_be_accessible(self):
         assert subprocess.check_output([
             'ssh',
@@ -125,13 +117,12 @@ class WhenDeployingServiceMasterSlaveBecomesSlaveMaster(
             'cat /anyblok_data/{}'.format(self.record_name)
         ]).decode('utf-8') == self.record_content
 
-    def anyblok_cache_directory_should_not_have_the_file(self):
-        file_path = os.path.join("/var/cache/", self.record_name)
+    def anyblok_fsdata_should_be_there(self):
         self.assert_file(
             self.master,
             self.app.ct.anyblok,
-            file_path,
-            'cat: {}: No such file or directory\n'.format(file_path),
+            os.path.join("/var/test_service/", self.record_name),
+            self.record_content
         )
 
     def purge_pg_volume_must_be_scheduled(self):
