@@ -1,8 +1,7 @@
 {% set rootfs = '/rootfs' %}
 {% set dev1 = '/dev/vdb' %}
 {% set dev2 = '/dev/vdc' %}
-{% set btrfs_volumes_dir = '/var/lib/buttervolume/volumes' %}
-{% set btrfs_snapshots_dir = '/var/lib/buttervolume/snapshots' %}
+{% set buttervolume_dir = '/var/lib/buttervolume' %}
 {% set minion_btrfs_mount_point = '/mnt/local' %}
 
 btrfs_format:
@@ -33,38 +32,74 @@ btrfs_subvolume_create_volumes:
     - require:
       - mount: btrfs_mount_local
 
-btrfs_systemd_mount_unit_snapshots:
+buttervolume_config:
+  file.directory:
+    - name: {{ minion_btrfs_mount_point }}/config
+    - require:
+      - mount: btrfs_mount_local
+
+buttervolume_ssh:
+  file.directory:
+    - name: {{ minion_btrfs_mount_point }}/ssh
+    - require:
+      - mount: btrfs_mount_local
+
+btrfs_systemd_mount_unit:
   file.managed:
-    - name: {{ rootfs }}/etc/systemd/system/var-lib-buttervolume-snapshots.mount
+    - name: {{ rootfs }}/etc/systemd/system/var-lib-buttervolume.mount
     - source: salt://btrfs/btrfs-subvolume.mount.jinja
     - template: jinja
     - defaults:
-        subvolume: snapshots
         device: {{ dev1 }}
-        mount_point: {{ btrfs_snapshots_dir }}
+        mount_point: {{ buttervolume_dir }}
 
-btrfs_systemd_mount_unit_volumes:
+btrfs_subvolume_mount:
+  service.running:
+    - name: var-lib-buttervolume.mount
+    - enable: True
+    - reload: True
+    - onchanges:
+      - file: btrfs_systemd_mount_unit
+    - require:
+      - cmd: btrfs_subvolume_create_snapshots
+      - cmd: btrfs_subvolume_create_volumes
+      - file: buttervolume_config
+      - file: buttervolume_ssh
+
+buttervolume_ssh_private_key:
   file.managed:
-    - name: {{ rootfs }}/etc/systemd/system/var-lib-buttervolume-volumes.mount
-    - source: salt://btrfs/btrfs-subvolume.mount.jinja
-    - template: jinja
-    - defaults:
-        subvolume: volumes
-        device: {{ dev1 }}
-        mount_point: {{ btrfs_volumes_dir }}
+    - name: {{ minion_btrfs_mount_point }}/ssh/id_rsa
+    - source: salt://ssh/buttervolume_id_rsa
+    - mode: 400
+    - require:
+      - service: btrfs_subvolume_mount
 
-btrfs_subvolume_mount_snapshots:
-  service.running:
-    - name: var-lib-buttervolume-snapshots.mount
-    - enable: True
-    - reload: True
-    - onchanges:
-      - file: btrfs_systemd_mount_unit_snapshots
+buttervolume_ssh_pub_key:
+  file.managed:
+    - name: {{ minion_btrfs_mount_point }}/ssh/id_rsa.pub
+    - source: salt://ssh/buttervolume_id_rsa.pub
+    - require:
+      - service: btrfs_subvolume_mount
 
-btrfs_subvolume_mount_volumes:
-  service.running:
-    - name: var-lib-buttervolume-volumes.mount
-    - enable: True
-    - reload: True
-    - onchanges:
-      - file: btrfs_systemd_mount_unit_volumes
+buttervolume_ssh_authorized_keys:
+  file.managed:
+    - name: {{ minion_btrfs_mount_point }}/ssh/authorized_keys
+    - source: salt://ssh/buttervolume_id_rsa.pub
+    - require:
+      - service: btrfs_subvolume_mount
+
+buttervolume_ssh_config:
+  file.managed:
+    - name: {{ minion_btrfs_mount_point }}/ssh/config
+    - contents: |
+        Host *
+          StrictHostKeyChecking no
+    - require:
+      - service: btrfs_subvolume_mount
+
+cluster_buttervolume_service_started:
+  cmd.run:
+    - name: docker plugin install --grant-all-permissions anybox/buttervolume:latest
+    - unless: docker plugin  ls | grep true
+    - require:
+      - service: btrfs_subvolume_mount

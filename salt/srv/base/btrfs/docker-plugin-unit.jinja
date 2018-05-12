@@ -1,0 +1,12 @@
+[Unit]
+Description=Run docker-compose in {{ working_directory }}
+Requires={{ requires }}
+After=docker.service
+
+[Service]
+WorkingDirectory={{ working_directory }}
+ExecStart={{ compose_bin }} {{ compose_options }} {{ cmd_start }}
+ExecStop={{ compose_bin }} {{ compose_options }} {{ cmd_stop }}
+
+[Install]
+WantedBy=multi-user.target

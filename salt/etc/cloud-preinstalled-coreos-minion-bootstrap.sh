@@ -1,8 +1,5 @@
 #!/bin/sh
 
-
-# minion is preinstalled in the base image
-# but is not running
 mkdir -p /home/core/salt/pki
 echo '{{ vm['priv_key'] }}' > /home/core/salt/pki/minion.pem
 echo '{{ vm['pub_key'] }}' > /home/core/salt/pki/minion.pub
