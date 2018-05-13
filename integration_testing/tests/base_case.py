@@ -54,7 +54,7 @@ class ClusterTestCase:
 
         for name, node in self.cluster.nodes.items():
             container = node['docker_cli'].containers.get(
-                'buttervolume_plugin_1'
+                'cluster_consul_1'
             )
             scheduled = self.cluster.get_scheduled(
                 container, filter_schedule, kind, volume

@@ -48,14 +48,14 @@ class WhenDeployingANewServiceMasterSlave(base_case.ClusterTestCase):
         self.assert_volume_exists_only_on(
             self.application.volume_prefix + 'dbdata',
             self.master,
-            kind='btrfs'
+            kind='anybox/buttervolume:latest'
         )
 
     def btrfs_anyblok_volume_should_exists_on_master(self):
         self.assert_volume_exists_only_on(
             self.application.volume_prefix + 'anyblok_data',
             self.master,
-            kind='btrfs'
+            kind='anybox/buttervolume:latest'
         )
 
     def cache_volume_must_exists_on_master(self):
