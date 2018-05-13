@@ -196,7 +196,7 @@ class Cluster:
         # remove old snapshots
         for name, node in self.nodes.items():
             container = node['docker_cli'].containers.get(
-                'buttervolume_plugin_1'
+                'cluster_consul_1'
             )
 
             def filter_schedule(schedule):
@@ -212,20 +212,52 @@ class Cluster:
                 container.exec_run('buttervolume schedule {}'.format(
                     str(schedule))
                 )
-            container.exec_run(
-                'bash -c "'
-                'btrfs subvolume delete /var/lib/docker/snapshots/{}*'
-                '"'.format(
-                    application.volume_prefix
-                )
-            )
-            container = node['docker_cli'].containers.get(
-                'cluster_consul_1'
+            self.cleanup_snapshots(
+                name, node['docker_cli'], application.volume_prefix
             )
             container.exec_run(
                 'bash -c "rm -rf /deploy/{}*"'.format(
                     "cluster_lab_test_service"
                 )
+            )
+
+    def cleanup_snapshots(self, node_name, docker_cli, volume_prefix):
+        try:
+            docker_cli.images.get("integration_testing/btrfs_cleanup:latest")
+        except docker.errors.ImageNotFound:
+            docker_cli.images.pull('alpine', tag='latest')
+            build = docker_cli.containers.create(
+                'alpine:latest',
+                command="sh -c 'apk update; apk add btrfs-progs'",
+            )
+            build.start()
+            build.wait()
+            build.commit(
+                repository="integration_testing/btrfs_cleanup",
+                tag='latest'
+            )
+            build.remove()
+        try:
+            docker_cli.containers.run(
+                "integration_testing/btrfs_cleanup:latest",
+                volumes={
+                    '/var/lib/buttervolume/': {
+                        'bind': '/var/lib/buttervolume',
+                        'mode': 'rw'
+                    },
+                },
+                command='sh -c "btrfs subvolume delete '
+                        '/var/lib/buttervolume/snapshots/{}*"'.format(
+                            volume_prefix
+                        ),
+                auto_remove=True
+            )
+        except docker.errors.ContainerError:
+            logger.debug(
+                "Cleanup snapshots failed (or probably no snapshot "
+                "were found) on node %s using: "
+                "'btrfs subvolume delete /var/lib/buttervolume/snapshots/%s*",
+                node_name, volume_prefix
             )
 
     def get_scheduled(self, container, scheduled_filter, *args, **kwargs):
