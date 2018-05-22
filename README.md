@@ -1,7 +1,8 @@
 # Cluster lab
 
-The intent of the project is to offer a lab to develop new fictionalises
-or fix bug in cluster project without breaking production.
+The intent of the project is to offer a lab to develop new features
+or fix bug in [cluster](https://github.com/mlfmonde/cluster) project without
+breaking production.
 
 An other intent would be to provide an automated integration platform.
 
@@ -10,6 +11,12 @@ An other intent would be to provide an automated integration platform.
 
 Finaly that can be an example of ways to spawn virtual machine for
 test environment.
+
+## Integration tests
+
+To get more information about what is tested and how launch test refer
+to [this README](integration_testing/README.md) in the integration_testting sub
+directory
 
 ## Workstation or host requirements
 
