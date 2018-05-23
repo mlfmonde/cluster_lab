@@ -82,6 +82,8 @@ class WhenDeployingANewServiceMasterSlave(base_case.ClusterTestCase):
             os.path.join(os.path.dirname(__file__), 'id_rsa_anyblok_ssh'),
             '-o',
             'StrictHostKeyChecking=no',
+            '-o',
+            'UserKnownHostsFile=/dev/null',
             '-C',
             'echo "test ssh"'
         ]).decode('utf-8') == "test ssh\n"

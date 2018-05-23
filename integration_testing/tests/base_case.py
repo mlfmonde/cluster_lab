@@ -35,7 +35,7 @@ class ClusterTestCase:
                 assert len(volumes) == 0, \
                     "We expect 0 volume called {} on node {}, " \
                     "found {} volumes {}".format(
-                        volume, node_name, len(volumes),
+                        volume, name, len(volumes),
                         [v.name for v in volumes]
                     )
 

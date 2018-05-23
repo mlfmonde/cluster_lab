@@ -55,6 +55,8 @@ class WhenSwitchToMaintenanceHapxConfigIsDisabled(base_case.ClusterTestCase):
                     ),
                     '-o',
                     'StrictHostKeyChecking=no',
+                    '-o',
+                    'UserKnownHostsFile=/dev/null',
                     '-C',
                     'echo "test ssh"'
                 ]

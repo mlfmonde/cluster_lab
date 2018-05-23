@@ -121,6 +121,8 @@ class WhenDeployingServiceMasterSlaveUsingNewNodesAsSlaveMasterUsingHaproxy(
             os.path.join(os.path.dirname(__file__), 'id_rsa_anyblok_ssh'),
             '-o',
             'StrictHostKeyChecking=no',
+            '-o',
+            'UserKnownHostsFile=/dev/null',
             '-C',
             'cat /anyblok_data/{}'.format(self.record_name)
         ]).decode('utf-8') == self.record_content
