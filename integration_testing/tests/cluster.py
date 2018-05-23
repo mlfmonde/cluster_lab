@@ -193,7 +193,7 @@ class Cluster:
             self.consul.kv.delete(
                 'maintenance/{}'.format(application.name)
             )
-        # remove old snapshots
+        # remove old snapshots or un expected volumes
         for name, node in self.nodes.items():
             container = node['docker_cli'].containers.get(
                 'cluster_consul_1'
@@ -212,7 +212,7 @@ class Cluster:
                 container.exec_run('buttervolume schedule {}'.format(
                     str(schedule))
                 )
-            self.cleanup_snapshots(
+            self.cleanup_volumes_and_snapshots(
                 name, node['docker_cli'], application.volume_prefix
             )
             container.exec_run(
@@ -221,7 +221,9 @@ class Cluster:
                 )
             )
 
-    def cleanup_snapshots(self, node_name, docker_cli, volume_prefix):
+    def cleanup_volumes_and_snapshots(
+        self, node_name, docker_cli, volume_prefix
+    ):
         try:
             docker_cli.images.get("integration_testing/btrfs_cleanup:latest")
         except docker.errors.ImageNotFound:
@@ -248,6 +250,20 @@ class Cluster:
                 },
                 command='sh -c "btrfs subvolume delete '
                         '/var/lib/buttervolume/snapshots/{}*"'.format(
+                            volume_prefix
+                        ),
+                auto_remove=True
+            )
+            docker_cli.containers.run(
+                "integration_testing/btrfs_cleanup:latest",
+                volumes={
+                    '/var/lib/buttervolume/': {
+                        'bind': '/var/lib/buttervolume',
+                        'mode': 'rw'
+                    },
+                },
+                command='sh -c "btrfs subvolume delete '
+                        '/var/lib/buttervolume/volumes/{}*"'.format(
                             volume_prefix
                         ),
                 auto_remove=True
