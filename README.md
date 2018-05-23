@@ -276,6 +276,13 @@ Or using a map file:
 sudo salt-cloud -m cluster-saltcloud.map -d
 ```
 
+using journalctl you have to define the ``--root`` parameter in order to get
+journals from the host machine:
+
+```bash
+sudo salt '*' cmd.run 'journalctl --root /rootfs -u cluster.service'
+```
+
 ### network management
 
 ### simulate SAN behaviours
