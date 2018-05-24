@@ -1,6 +1,6 @@
 {% set username = "core" %}
 {% set cluster_repo = 'https://github.com/petrus-v/cluster' %}
-{% set cluster_rev = 'buttervolume3' %}
+{% set cluster_rev = 'fix_add_remove_volumes' %}
 {% set rootfs = '/rootfs' %}
 {% set compose_binary = '/opt/bin/docker-compose' %}
 {% set docker_volumes_dir = '/var/lib/docker/volumes' %}
