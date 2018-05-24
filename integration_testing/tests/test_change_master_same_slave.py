@@ -79,7 +79,7 @@ class WhenDeployingServiceWithANewMaster(
         # ready to handler requests which needs more time... think
         # about the best solution to test that service is ready to handle
         # resquests
-        time.sleep(5)
+        time.sleep(3)
 
     def a_key_must_be_in_the_kv_store(self):
         self.assert_key_exists(self.application.app_key)
