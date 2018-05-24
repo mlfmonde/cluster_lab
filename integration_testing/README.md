@@ -33,7 +33,7 @@ with differents case and where it's tested:
   core2/core3 => core2/core3
 - [x] [redeploy new master/slave](tests/test_move_new_master_slave_whitout_caddy.py):
   core1/core4 => core3/core2
-- [ ] [redeploy keeping master]():
+- [x] [redeploy keeping master](tests/test_change_slave_same_master.py):
   core4/core2 => core4/core1
 - [x] [redeploy keeping slave](tests/test_change_master_same_slave.py):
   core4/core2 => core1/core2
@@ -48,8 +48,8 @@ with differents case and where it's tested:
 
 - [x] [add new buttervolume volume](tests/test_change_master_same_slave.py)
   ***This test should be done in multiple cases today only one
-  case is cover: core4/core2 => core1/core2***
-- [ ] remove volume
+  covered case: core4/core2 => core1/core2***
+- [x] [remove volume](tests/test_change_slave_same_master.py)
 - [x] [bind relative path in docker-compose](tests/test_bind_relative_path.py)
 - [x] [deactivated haproxy config while switching](
   tests/test_disable_hapx_config_while_maintenance_mode.py)
