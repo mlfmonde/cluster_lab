@@ -84,6 +84,8 @@ class WhenDeployingANewServiceMasterSlave(base_case.ClusterTestCase):
             'StrictHostKeyChecking=no',
             '-o',
             'UserKnownHostsFile=/dev/null',
+            '-o',
+            'IdentitiesOnly=yes',
             '-C',
             'echo "test ssh"'
         ]).decode('utf-8') == "test ssh\n"

@@ -140,6 +140,8 @@ class WhenDeployingServiceWithANewMaster(
             'StrictHostKeyChecking=no',
             '-o',
             'UserKnownHostsFile=/dev/null',
+            '-o',
+            'IdentitiesOnly=yes',
             '-C',
             'echo "test"'
         ]).decode('utf-8') == "test\n"

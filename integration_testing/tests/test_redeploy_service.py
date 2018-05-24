@@ -115,6 +115,8 @@ class WhenDeployingServiceWithSameSlaveMaster(
             'StrictHostKeyChecking=no',
             '-o',
             'UserKnownHostsFile=/dev/null',
+            '-o',
+            'IdentitiesOnly=yes',
             '-C',
             'cat /anyblok_data/{}'.format(self.record_name)
         ]).decode('utf-8') == self.record_content
