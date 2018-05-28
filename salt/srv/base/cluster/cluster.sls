@@ -1,6 +1,6 @@
 {% set username = "core" %}
-{% set cluster_repo = 'https://github.com/petrus-v/cluster' %}
-{% set cluster_rev = 'fix_add_remove_volumes' %}
+{% set cluster_repo = 'https://github.com/mlfmonde/cluster' %}
+{% set cluster_rev = 'master' %}
 {% set rootfs = '/rootfs' %}
 {% set compose_binary = '/opt/bin/docker-compose' %}
 {% set docker_volumes_dir = '/var/lib/docker/volumes' %}
@@ -12,6 +12,7 @@ cluster-code:
         - target: {{ rootfs }}/home/{{ username }}/cluster
         - rev: {{ cluster_rev }}
         - branch: testing
+        - force_fetch: True
         - force_reset: True
         - force_checkout: True
 
