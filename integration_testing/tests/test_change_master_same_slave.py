@@ -6,7 +6,6 @@ Tag is used to make the service the same over different commits.
 import os
 import requests
 import subprocess
-import time
 import uuid
 
 from . import base_case
@@ -39,11 +38,7 @@ class WhenDeployingServiceWithANewMaster(
         self.cluster.wait_logs(
             app.master, app.ct.anyblok, '--wsgi-host 0.0.0.0', timeout=30
         )
-        # We are happy that anyblok started but we expected anyblok service
-        # ready to handler requests which needs more time... think
-        # about the best solution to test that service is ready to handle
-        # resquests
-        time.sleep(3)
+        self.cluster.wait_http_code('http://service.cluster.lab', timeout=10)
         session = requests.Session()
         self.record_name = str(uuid.uuid4())
         self.record_content = str(uuid.uuid4())
@@ -75,11 +70,7 @@ class WhenDeployingServiceWithANewMaster(
         self.cluster.wait_logs(
             self.master, self.app.ct.anyblok, '--wsgi-host 0.0.0.0', timeout=30
         )
-        # We are happy that anyblok started but we expected anyblok service
-        # ready to handler requests which needs more time... think
-        # about the best solution to test that service is ready to handle
-        # resquests
-        time.sleep(3)
+        self.cluster.wait_http_code('http://service.cluster.lab', timeout=10)
 
     def a_key_must_be_in_the_kv_store(self):
         self.assert_key_exists(self.application.app_key)

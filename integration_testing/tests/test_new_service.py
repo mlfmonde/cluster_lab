@@ -1,7 +1,6 @@
 import os
 import requests
 import subprocess
-import time
 
 from . import base_case
 from . import cluster
@@ -29,11 +28,7 @@ class WhenDeployingANewServiceMasterSlave(base_case.ClusterTestCase):
         self.cluster.wait_logs(
             self.master, self.app.ct.anyblok, '--wsgi-host 0.0.0.0', timeout=30
         )
-        # We are happy that anyblok started but we expected anyblok service
-        # ready to handler requests which needs more time... think
-        # about the best solution to test that service is ready to handle
-        # resquests
-        time.sleep(3)
+        self.cluster.wait_http_code('http://service.cluster.lab', timeout=10)
 
     def a_key_must_be_in_the_kv_store(self):
         self.assert_key_exists(self.application.app_key)

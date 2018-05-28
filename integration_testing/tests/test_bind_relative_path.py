@@ -12,7 +12,6 @@ At some point we use to get 2 issues while deploying this kind of services:
   source (on the host machine) and targe (in the container)
 """
 import requests
-import time
 
 from . import base_case
 from . import cluster
@@ -39,11 +38,7 @@ class WhenDeployingAServiceThatBindARelativePath(
         self.cluster.wait_logs(
             self.master, self.app.ct.anyblok, '--wsgi-host 0.0.0.0', timeout=30
         )
-        # We are happy that anyblok started but we expected anyblok service
-        # ready to handler requests which needs more time... think
-        # about the best solution to test that service is ready to handle
-        # resquests
-        time.sleep(3)
+        self.cluster.wait_http_code('http://service.cluster.lab', timeout=10)
 
     def service_should_return_HTTP_code_200(self):
         '''we may add a dns server (bind9?) at some point to manage DNS'''
