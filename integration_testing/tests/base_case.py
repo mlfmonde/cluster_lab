@@ -101,7 +101,7 @@ class ClusterTestCase:
         content = self.cluster.nodes.get(node)['docker_cli'].containers.get(
             container
         ).exec_run(
-            'cat {}'.format(path)
+            'bash -c "sleep 0.1; cat {}"'.format(path)
         ).output.decode('utf-8')
         assert expected_content == content,\
             "Content not matched, expected: {} - got {}".format(
