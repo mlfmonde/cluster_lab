@@ -1,8 +1,9 @@
 import consulate
 import docker
 import hashlib
-import logging
 import json
+import logging
+import requests
 import time
 
 from collections import namedtuple
@@ -133,7 +134,7 @@ class Cluster:
                     " ({}s),".format(event_id, timeout)
                 )
         # Make sure caddy and happroxy are reload and service registered
-        time.sleep(3)
+        time.sleep(1)
         logger.info(
             "Event %s takes %ss to consume",
             event_name, (datetime.now() - start_date).seconds
@@ -142,6 +143,36 @@ class Cluster:
 
     def get_app_from_kv(self, key):
         return json2obj(self.consul.kv.get(key))
+
+    def wait_http_code(self, uri, http_code=200, timeout=DEFAULT_TIMEOUT):
+        """Loop until expected http code in the timeout allowed time"""
+
+        start_date = datetime.now()
+        carry_on = True
+
+        session = requests.Session()
+        while carry_on:
+            response = session.get(uri)
+            if response.status_code == http_code:
+                logging.info(
+                    "uri %s gets expected http code %s (in %s s)",
+                    uri, http_code, (datetime.now() - start_date).seconds
+                )
+                carry_on = False
+                break
+            if (datetime.now() - start_date).seconds > timeout:
+                # we could add a setting to raise an Error, don't needs now
+                logging.warning(
+                    "Uri %s do not responds with http code %s in the given "
+                    "time %ss",
+                    uri,
+                    http_code,
+                    timeout
+                )
+                carry_on = False
+                break
+            time.sleep(0.1)
+        session.close()
 
     def wait_logs(
         self, node_name, container_name, message, timeout=DEFAULT_TIMEOUT
@@ -193,8 +224,24 @@ class Cluster:
             self.consul.kv.delete(
                 'maintenance/{}'.format(application.name)
             )
-        # remove old snapshots
+        # remove containers, old volumes and snapshots
         for name, node in self.nodes.items():
+            cts = node['docker_cli'].containers.list(
+                all=True,
+                filters=dict(
+                    name="{}*".format(application.volume_prefix),
+                )
+            )
+            for ct in cts:
+                ct.remove(v=True, force=True)
+            volumes = node['docker_cli'].volumes.list(
+                filters=dict(
+                    name="{}*".format(application.volume_prefix),
+                )
+            )
+            for volume in volumes:
+                volume.remove(force=True)
+
             container = node['docker_cli'].containers.get(
                 'cluster_consul_1'
             )
@@ -221,7 +268,9 @@ class Cluster:
                 )
             )
 
-    def cleanup_snapshots(self, node_name, docker_cli, volume_prefix):
+    def cleanup_snapshots(
+        self, node_name, docker_cli, volume_prefix
+    ):
         try:
             docker_cli.images.get("integration_testing/btrfs_cleanup:latest")
         except docker.errors.ImageNotFound:
@@ -250,21 +299,23 @@ class Cluster:
                         '/var/lib/buttervolume/snapshots/{}*"'.format(
                             volume_prefix
                         ),
-                auto_remove=True
+                remove=True,
+                privileged=True
             )
-        except docker.errors.ContainerError:
+        except docker.errors.ContainerError as err:
             logger.debug(
                 "Cleanup snapshots failed (or probably no snapshot "
                 "were found) on node %s using: "
-                "'btrfs subvolume delete /var/lib/buttervolume/snapshots/%s*",
-                node_name, volume_prefix
+                "'btrfs subvolume delete /var/lib/buttervolume/snapshots/%s*' "
+                "with following err:\n %r",
+                node_name, volume_prefix, err
             )
 
     def get_scheduled(self, container, scheduled_filter, *args, **kwargs):
         """Get scheduled given a buttervolume container
 
         :param container: buttervolume container (docker api)
-        :param scheduled_filter: a method to filter schedule, wich must
+        :param scheduled_filter: a method to filter schedule, which must
                                  return ``True`` to add the schedul to the
                                  list and ``False`` to ignore it::
 

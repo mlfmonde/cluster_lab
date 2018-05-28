@@ -35,7 +35,7 @@ class ClusterTestCase:
                 assert len(volumes) == 0, \
                     "We expect 0 volume called {} on node {}, " \
                     "found {} volumes {}".format(
-                        volume, node_name, len(volumes),
+                        volume, name, len(volumes),
                         [v.name for v in volumes]
                     )
 
@@ -101,7 +101,7 @@ class ClusterTestCase:
         content = self.cluster.nodes.get(node)['docker_cli'].containers.get(
             container
         ).exec_run(
-            'cat {}'.format(path)
+            'bash -c "sleep 0.1; cat {}"'.format(path)
         ).output.decode('utf-8')
         assert expected_content == content,\
             "Content not matched, expected: {} - got {}".format(

@@ -24,11 +24,7 @@ class WhenSwitchToMaintenanceHapxConfigIsDisabled(base_case.ClusterTestCase):
         self.cluster.wait_logs(
             app.master, app.ct.anyblok, '--wsgi-host 0.0.0.0', timeout=30
         )
-        # We are happy that anyblok started but we expected anyblok service
-        # ready to handler requests which needs more time... think
-        # about the best solution to test that service is ready to handle
-        # resquests
-        time.sleep(3)
+        self.cluster.wait_http_code('http://service.cluster.lab', timeout=10)
         session = requests.Session()
         response = session.get('http://service.cluster.lab')
         assert 200 == response.status_code
@@ -39,7 +35,7 @@ class WhenSwitchToMaintenanceHapxConfigIsDisabled(base_case.ClusterTestCase):
             'maintenance/{}'.format(self.application.name), ""
         )
         # let haproxy reload its config
-        time.sleep(2)
+        time.sleep(1)
 
     def anyblok_ssh_should_be_inaccessible(self):
         try:
@@ -55,6 +51,10 @@ class WhenSwitchToMaintenanceHapxConfigIsDisabled(base_case.ClusterTestCase):
                     ),
                     '-o',
                     'StrictHostKeyChecking=no',
+                    '-o',
+                    'UserKnownHostsFile=/dev/null',
+                    '-o',
+                    'IdentitiesOnly=yes',
                     '-C',
                     'echo "test ssh"'
                 ]

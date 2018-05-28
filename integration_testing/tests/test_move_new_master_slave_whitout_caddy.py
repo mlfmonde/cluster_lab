@@ -1,7 +1,6 @@
 import os
 import requests
 import subprocess
-import time
 import uuid
 
 from . import base_case
@@ -28,11 +27,7 @@ class WhenDeployingServiceMasterSlaveUsingNewNodesAsSlaveMasterUsingHaproxy(
         self.cluster.wait_logs(
             app.master, app.ct.anyblok, '--wsgi-host 0.0.0.0', timeout=30
         )
-        # We are happy that anyblok started but we expected anyblok service
-        # ready to handler requests which needs more time... think
-        # about the best solution to test that service is ready to handle
-        # resquests
-        time.sleep(3)
+        self.cluster.wait_http_code('http://service.cluster.lab', timeout=10)
         session = requests.Session()
         self.record_name = str(uuid.uuid4())
         self.record_content = str(uuid.uuid4())
@@ -59,11 +54,7 @@ class WhenDeployingServiceMasterSlaveUsingNewNodesAsSlaveMasterUsingHaproxy(
         self.cluster.wait_logs(
             self.master, self.app.ct.anyblok, '--wsgi-host 0.0.0.0', timeout=30
         )
-        # We are happy that anyblok started but we expected anyblok service
-        # ready to handler requests which needs more time... think
-        # about the best solution to test that service is ready to handle
-        # resquests
-        time.sleep(3)
+        self.cluster.wait_http_code('http://service.cluster.lab', timeout=10)
 
     def a_key_must_be_in_the_kv_store(self):
         self.assert_key_exists(self.application.app_key)
@@ -121,6 +112,10 @@ class WhenDeployingServiceMasterSlaveUsingNewNodesAsSlaveMasterUsingHaproxy(
             os.path.join(os.path.dirname(__file__), 'id_rsa_anyblok_ssh'),
             '-o',
             'StrictHostKeyChecking=no',
+            '-o',
+            'UserKnownHostsFile=/dev/null',
+            '-o',
+            'IdentitiesOnly=yes',
             '-C',
             'cat /anyblok_data/{}'.format(self.record_name)
         ]).decode('utf-8') == self.record_content

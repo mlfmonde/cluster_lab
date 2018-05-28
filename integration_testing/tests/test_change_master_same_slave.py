@@ -1,29 +1,71 @@
+"""To launch this test you require to push push access to the
+cluster_lab_service_test repo.
+
+Tag is used to make the service the same over different commits.
+"""
 import os
 import requests
 import subprocess
+import uuid
 
 from . import base_case
 from . import cluster
+from . import git_utils
 
 
-class WhenDeployingANewServiceMasterSlave(base_case.ClusterTestCase):
+class WhenDeployingServiceWithANewMaster(
+    base_case.ClusterTestCase
+):
 
-    def given_a_cluster_without_test_service(self):
+    def given_a_cluster_with_running_service(self):
         self.application = cluster.Application(
             'https://github.com/mlfmonde/cluster_lab_test_service',
-            'master'
+            "test_remove_volume"
+        )
+        git_utils.Git.tag_and_push(
+            repo='git@github.com:mlfmonde/cluster_lab_test_service',
+            ref='without_caddyfile',
+            tagname="test_remove_volume"
         )
         self.cluster.cleanup_application(self.application)
+        self.cluster.deploy_and_wait(
+            master='core4',
+            slave='core2',
+            application=self.application,
+        )
+
+        app = self.cluster.get_app_from_kv(self.application.app_key)
+        self.cluster.wait_logs(
+            app.master, app.ct.anyblok, '--wsgi-host 0.0.0.0', timeout=30
+        )
+        self.cluster.wait_http_code('http://service.cluster.lab', timeout=10)
+        session = requests.Session()
+        self.record_name = str(uuid.uuid4())
+        self.record_content = str(uuid.uuid4())
+        response = session.post(
+            'http://service.cluster.lab/example?name={}&content={}'.format(
+                self.record_name, self.record_content
+            )
+        )
+        assert 201 == response.status_code
+        self.record_location = response.headers['Location']
+        self.record_id = response.json()['id']
+        session.close()
+
         self.master = 'core1'
         self.slave = 'core2'
 
-    def becauseWeDeployTheService(self):
+    def becauseWeDeployServiceOnANewMasterUsingSameSlave(self):
+        git_utils.Git.tag_and_push(
+            repo='git@github.com:mlfmonde/cluster_lab_test_service',
+            ref="missing_volume",
+            tagname="test_remove_volume"
+        )
         self.cluster.deploy_and_wait(
             master=self.master,
             slave=self.slave,
             application=self.application,
         )
-        # give a chance to let anyblok setting up its db
         self.app = self.cluster.get_app_from_kv(self.application.app_key)
         self.cluster.wait_logs(
             self.master, self.app.ct.anyblok, '--wsgi-host 0.0.0.0', timeout=30
@@ -36,8 +78,8 @@ class WhenDeployingANewServiceMasterSlave(base_case.ClusterTestCase):
     def master_salve_should_be_correct_in_kv_store(self):
         assert (self.master, self.slave) == (self.app.master, self.app.slave)
 
-    def kv_must_know_2_btrfs_volumes(self):
-        assert len(self.app.volumes) == 2
+    def kv_must_know_1_btrfs_volumes(self):
+        assert len(self.app.volumes) == 1
 
     def btrfs_pg_volume_should_exists_only_on_master(self):
         self.assert_volume_exists_only_on(
@@ -46,10 +88,10 @@ class WhenDeployingANewServiceMasterSlave(base_case.ClusterTestCase):
             kind='anybox/buttervolume:latest'
         )
 
-    def btrfs_anyblok_volume_should_exists_on_master(self):
+    def btrfs_anyblok_volume_should_not_exists_on_master_anymore(self):
         self.assert_volume_exists_only_on(
             self.application.volume_prefix + 'anyblok_data',
-            self.master,
+            "unexisting node",  # Volume should not exists anymore
             kind='anybox/buttervolume:latest'
         )
 
@@ -60,12 +102,22 @@ class WhenDeployingANewServiceMasterSlave(base_case.ClusterTestCase):
             kind='local'
         )
 
-    def service_should_return_HTTP_code_200(self):
-        '''we may add a dns server (bind9?) at some point to manage DNS'''
+    def service_should_return_freshly_created_db_record(self):
         session = requests.Session()
-        response = session.get('http://service.cluster.lab')
-        assert 200 == response.status_code
+        response = session.get(
+            'http://service.cluster.lab/example/{}'.format(self.record_id)
+        )
+        assert self.record_name == response.text
         session.close()
+
+    def anyblok_fsdata_should_not_be_there(self):
+        file_path = os.path.join("/var/test_service/", self.record_name)
+        self.assert_file(
+            self.master,
+            self.app.ct.anyblok,
+            file_path,
+            'cat: {}: No such file or directory\n'.format(file_path),
+        )
 
     def anyblok_ssh_should_be_accessible(self):
         assert subprocess.check_output([
@@ -82,8 +134,17 @@ class WhenDeployingANewServiceMasterSlave(base_case.ClusterTestCase):
             '-o',
             'IdentitiesOnly=yes',
             '-C',
-            'echo "test ssh"'
-        ]).decode('utf-8') == "test ssh\n"
+            'echo "test"'
+        ]).decode('utf-8') == "test\n"
+
+    def anyblok_cache_directory_should_not_have_the_file(self):
+        file_path = os.path.join("/var/cache/", self.record_name)
+        self.assert_file(
+            self.master,
+            self.app.ct.anyblok,
+            file_path,
+            'cat: {}: No such file or directory\n'.format(file_path),
+        )
 
     def purge_pg_volume_must_be_scheduled(self):
         self.assert_btrfs_scheduled(
@@ -92,11 +153,11 @@ class WhenDeployingANewServiceMasterSlave(base_case.ClusterTestCase):
             [self.master, self.slave],
         )
 
-    def purge_anyblok_volume_must_be_scheduled(self):
+    def purge_anyblok_volume_should_not_be_scheduled(self):
         self.assert_btrfs_scheduled(
             'purge',
             self.application.volume_prefix + 'anyblok_data',
-            [self.master, self.slave],
+            [],
         )
 
     def replicate_pg_volume_must_be_scheduled(self):
@@ -106,11 +167,11 @@ class WhenDeployingANewServiceMasterSlave(base_case.ClusterTestCase):
             [self.master],
         )
 
-    def replicate_anyblok_volume_must_be_scheduled(self):
+    def replicate_anyblok_volume_should_not_be_scheduled(self):
         self.assert_btrfs_scheduled(
             'replicate',
             self.application.volume_prefix + 'anyblok_data',
-            [self.master],
+            [],
         )
 
     def non_btrfs_volume_should_not_get_schedule(self):

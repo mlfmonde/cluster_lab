@@ -3,6 +3,61 @@
 The goal of integration tests are to making sure each piece of the
 infrastructure are working well for a given version.
 
+## What's is tested
+
+> **WARNING**: With the time I can forget to report here what's tested it's
+> often better to read the code. I'll do my best to keep it updated.
+
+### switch tests
+
+There are a lot possible switch between 4 nodes, here the exaustived list
+with differents case and where it's tested:
+
+#### Master only
+
+- deploy new master alone: None => core1, **we should add some tests but
+  some tests by**:
+    - [test_bind_relative_path.py](tests/test_bind_relative_path.py):
+    - [test_docker_compose_version_consistency.py](
+      tests/test_docker_compose_version_consistency.py):
+- [ ] [move master to an other node]()
+- [ ] [redeploy master on the same node]()
+
+#### Two nodes master/slave
+
+- [x] [new deploiement master/slave](tests/test_new_service.py):
+  None/None => core1/core2
+- [x] [switch slave <-> master](tests/test_reverse_service.py):
+  core3/core4 => core4/core3
+- [x] [redeploy same master/slave](tests/test_redeploy_service.py):
+  core2/core3 => core2/core3
+- [x] [redeploy new master/slave](tests/test_move_new_master_slave_whitout_caddy.py):
+  core1/core4 => core3/core2
+- [x] [redeploy keeping master](tests/test_change_slave_same_master.py):
+  core4/core2 => core4/core1
+- [x] [redeploy keeping slave](tests/test_change_master_same_slave.py):
+  core4/core2 => core1/core2
+
+
+#### Changing master/slave to master only
+
+- [ ] [master/slave to master only]()
+- [ ] [master only to master/slave]()
+
+### There are some meet issues tested
+
+- [x] [add new buttervolume volume](tests/test_change_master_same_slave.py)
+  ***This test should be done in multiple cases today only one
+  covered case: core4/core2 => core1/core2***
+- [x] [remove volume](tests/test_change_slave_same_master.py)
+- [x] [bind relative path in docker-compose](tests/test_bind_relative_path.py)
+- [x] [deactivated haproxy config while switching](
+  tests/test_disable_hapx_config_while_maintenance_mode.py)
+- [x] [docker engine and docker-compose version consistency](
+  tests/test_bind_relative_path.py)
+- [x] [test bypassing the main caddyserver](
+  tests/test_move_new_master_slave_whitout_caddy.py)
+
 ## TODO
 
 A reminder about nice things to do
@@ -12,7 +67,7 @@ A reminder about nice things to do
     on each nodes:
     - https://docs.docker.com/registry/recipes/mirror/#use-case-the-china-registry-mirror
     - https://blog.docker.com/2015/10/registry-proxy-cache-docker-open-source/
-[ ] Find a proper way to know anyblok    db initialisation is over
+[ ] Find a proper way to know anyblok db initialisation is over
 
 ## Setup test environment
 
