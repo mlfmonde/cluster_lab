@@ -47,6 +47,13 @@ class WhenDeployingAServiceThatBindARelativePath(
         assert 200 == response.status_code
         session.close()
 
+    def service_should_be_clone_in_the_expected_directory(self):
+        self.assert_project_cloned(
+            self.application,
+            self.app.deploy_id,
+            nodes=[self.master]
+        )
+
     def bind_file_should_be_availaible_in_container(self):
         self.assert_file(
             self.master,

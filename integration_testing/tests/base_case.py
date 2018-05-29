@@ -1,6 +1,8 @@
 """Base case, provide cluster specific assertion and cluster
 facilities to make test easy to read.
 """
+import os
+
 from . import cluster
 from docker import errors
 
@@ -43,6 +45,30 @@ class ClusterTestCase:
         assert self.cluster.consul.catalog.service(
             service_id
         )[0]['Node'] == node
+
+    def assert_project_cloned(self, application, deploy_id, nodes=None):
+        if not nodes or not isinstance(nodes, list):
+            nodes = []
+        path = os.path.join(
+            cluster.DEPLOY_ROOT_DIR,
+            "{}-{}".format(application.name, deploy_id),
+            ".env"
+        )
+        expected_content = "COMPOSE_PROJECT_NAME={}\n".format(
+            application.compose_project_name
+        )
+        for name, _ in self.cluster.nodes.items():
+            if name in nodes:
+                self.assert_file(
+                    name, "cluster_consul_1", path, expected_content
+                )
+            else:
+                self.assert_file(
+                    name,
+                    "cluster_consul_1",
+                    path,
+                    "cat: can't open '{}': No such file or directory\n".format(path),
+                )
 
     def assert_btrfs_scheduled(self, kind, volume, nodes):
         """Assert btrfs scheduled are present on given nodes and absent on
@@ -101,7 +127,7 @@ class ClusterTestCase:
         content = self.cluster.nodes.get(node)['docker_cli'].containers.get(
             container
         ).exec_run(
-            'bash -c "sleep 0.1; cat {}"'.format(path)
+            'sh -c "sleep 0.1; cat {}"'.format(path)
         ).output.decode('utf-8')
         assert expected_content == content,\
             "Content not matched, expected: {} - got {}".format(
