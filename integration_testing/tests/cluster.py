@@ -14,6 +14,7 @@ from urllib import parse
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 DEFAULT_TIMEOUT = 600
+DEPLOY_ROOT_DIR = '/deploy'
 
 
 class Cluster:
@@ -341,15 +342,14 @@ class Cluster:
         ]
 
 
-def _json_object_hook(datum):
-    return namedtuple('X', datum.keys())(*datum.values())
+def _json_object_hook(data):
+    keys = [k.replace('-', '_') for k in data.keys()]
+    return namedtuple('X', keys)(*data.values())
 
 
 def json2obj(data):
     if not data:
         return None
-    # as ``-`` are not allow in class attr _json_object_hook would failed
-    data = data.replace('-', '_')
     return json.loads(data, object_hook=_json_object_hook)
 
 
@@ -430,4 +430,8 @@ class Application(object):
 
     @property
     def volume_prefix(self):
-        return self.name.replace('.', '').replace('_', '') + '_'
+        return self.compose_project_name + '_'
+
+    @property
+    def compose_project_name(self):
+        return self.name.replace('.', '').replace('_', '')

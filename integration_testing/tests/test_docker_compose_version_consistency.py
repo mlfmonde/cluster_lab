@@ -37,6 +37,13 @@ class WhenDeployingAServiceThatCopySymlinkWhileBuildingImage(
         )
         self.cluster.wait_http_code('http://service.cluster.lab', timeout=10)
 
+    def service_should_be_clone_in_the_expected_directory(self):
+        self.assert_project_cloned(
+            self.application,
+            self.app.deploy_id,
+            nodes=[self.master]
+        )
+
     def service_should_return_HTTP_code_200(self):
         '''we may add a dns server (bind9?) at some point to manage DNS'''
         session = requests.Session()

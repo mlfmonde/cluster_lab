@@ -59,6 +59,13 @@ class WhenDeployingServiceMasterSlaveUsingNewNodesAsSlaveMasterUsingHaproxy(
     def a_key_must_be_in_the_kv_store(self):
         self.assert_key_exists(self.application.app_key)
 
+    def service_should_be_clone_in_the_expected_directory(self):
+        self.assert_project_cloned(
+            self.application,
+            self.app.deploy_id,
+            nodes=[self.master, self.slave]
+        )
+
     def master_salve_should_be_correct_in_kv_store(self):
         assert (self.master, self.slave) == (self.app.master, self.app.slave)
 
