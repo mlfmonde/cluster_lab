@@ -67,7 +67,8 @@ class ClusterTestCase:
                     name,
                     "cluster_consul_1",
                     path,
-                    "cat: can't open '{}': No such file or directory\n".format(path),
+                    "cat: can't open '{}': No such file or "
+                    "directory\n".format(path),
                 )
 
     def assert_btrfs_scheduled(self, kind, volume, nodes):
