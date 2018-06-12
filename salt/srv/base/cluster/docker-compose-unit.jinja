@@ -5,6 +5,8 @@ After=docker.service
 
 [Service]
 WorkingDirectory={{ working_directory }}
+ExecStartPre={{ compose_bin }} {{ compose_options }} {{ cmd_startpre1 }}
+ExecStartPre={{ compose_bin }} {{ compose_options }} {{ cmd_startpre2 }}
 ExecStart={{ compose_bin }} {{ compose_options }} {{ cmd_start }}
 ExecStop={{ compose_bin }} {{ compose_options }} {{ cmd_stop }}
 

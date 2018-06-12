@@ -243,6 +243,14 @@ sudo salt '*' state.apply
 > the job management docuemntation](
 > https://docs.saltstack.com/en/latest/topics/jobs/index.html#the-jobs-runner)
 
+
+if you change cluster branch to test you must apply states and restart
+cluster.service:
+
+```bash
+salt '*' service.restart cluster.service
+```
+
 Then you can run salt commands likes:
 
 ```bash
