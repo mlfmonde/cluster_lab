@@ -131,7 +131,7 @@ qemu-img create -f qcow2 /var/lib/libvirt/images/coreos/btrfs2.img 25G
 virt-install --connect qemu:///system \
              --import \
              --name coreos-template \
-             --ram 1024 --vcpus 1 \
+             --ram 2048 --vcpus 2 \
              --os-type=linux \
              --os-variant=virtio26 \
              --disk path=/var/lib/libvirt/images/coreos/coreos-template.qcow2,format=qcow2,bus=virtio \
