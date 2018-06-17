@@ -135,6 +135,40 @@ sudo echo "192.168.122.82  service.cluster.lab" >> /etc/hosts
 > python:3-stretch) used in the test service is quite heavy and must be
 > downloaded on each nodes. This depend on your network band width.
 
+
+## Troubleshoot
+
+Here some commons troubleshoots you can met;
+
+### ConnectionError
+
+While running contexts test case you can get a connection error:
+
+```python
+  raise ConnectionError(err, request=request)
+requests.exceptions.ConnectionError: ('Connection aborted.', ConnectionRefusedError(111, 'Connection refused'))
+```
+This happens when the ``/tmp/docker_core?.sock`` file exists but the ssh
+tunnel that bind the docker daemon socket stoped.
+
+Make sure your coreos machine are up and ssh connection alive.
+
+## RequestError
+
+While running contexts test case you can get a Request error:
+
+```python
+  raise exceptions.RequestError(str(err))
+consulate.exceptions.RequestError: HTTPConnectionPool(host='localhost', port=8500): Max retries exceeded with url: /v1/kv/app/cluster_lab_test_service_without_caddyfile.89b06 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f52153cfba8>: Failed to establish a new connection: [Errno 111] Connection refused',))
+```
+
+This happens when the ssh tunnel to connect to the consul API was stopped.
+
+Make sure your consul cluster is alive and the api responding on
+``localhost:8500`` (localhost where you are running testcase
+)
+
+
 ## POCs
 
 ### nuka
