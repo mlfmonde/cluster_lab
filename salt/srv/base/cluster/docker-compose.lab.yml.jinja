@@ -5,6 +5,7 @@ services:
     restart: ""
     command: ["agent", "-server", {% for server, addrs in salt['mine.get']('*', 'network.ip_addrs') | dictsort() %}"-retry-join={{ addrs[0] }}", {% endfor %}"-ui", "-bootstrap-expect=4"]
     environment:
+        CONSUL_UI_BETA: "1"
         CONSUL_LOCAL_CONFIG: '{
             "enable_script_checks": true,
             "watches": [{
