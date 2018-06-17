@@ -18,6 +18,7 @@ services:
       # to make consul checks happy, force using local haproxy as we
       # have no dns resolution at the moment
       - "service.cluster.lab:127.0.0.1"
+      - "service.qualif.cluster.lab:127.0.0.1"
 
   haproxy:
     restart: ""
