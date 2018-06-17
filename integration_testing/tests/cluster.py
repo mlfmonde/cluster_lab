@@ -5,6 +5,7 @@ import json
 import logging
 import requests
 import time
+import uuid
 
 from collections import namedtuple
 from datetime import datetime
@@ -341,6 +342,22 @@ class Cluster:
             ] if scheduled_filter(s, *args, **kwargs)
         ]
 
+    def create_service_data(self, domain=None):
+        if not domain:
+            domain = 'service.cluster.lab'
+        session = requests.Session()
+        name = str(uuid.uuid4())
+        content = str(uuid.uuid4())
+        response = session.post(
+            'http://{}/example?name={}&content={}'.format(
+                domain, name, content
+            )
+        )
+        assert 201 == response.status_code
+        location = response.headers['Location']
+        id = response.json()['id']
+        session.close()
+        return (id, location, name, content)
 
 def _json_object_hook(data):
     keys = [k.replace('-', '_') for k in data.keys()]
