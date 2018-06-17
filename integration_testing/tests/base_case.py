@@ -130,7 +130,7 @@ class ClusterTestCase:
         ).exec_run(
             'sh -c "sleep 0.1; cat {}"'.format(path)
         ).output.decode('utf-8')
-        assert expected_content == content,\
+        assert expected_content.strip() == content.strip(), \
             "Content not matched, expected: {} - got {}".format(
                 expected_content, content
             )
