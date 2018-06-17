@@ -99,24 +99,25 @@ sudo salt '*' grains.get ip4_interfaces:eth0
 * To consul, you need to open an ssh tunnel that consul is accessible on
   ``http://localhost:8500``:
 
-```bash
-ssh -L 8500:localhost:8500 core@192.168.122.32 -i salt/srv/base/ssh/core_id_rsa
+```bash250
+ssh -L 8500:localhost:8500 core@192.168.122.95 -i salt/srv/base/ssh/core_id_rsa
 ```
 
 * To each docker daemons, create an ssh tunnel to the socket for each nodes:
 
 ```bash
-ssh -nNT -L /tmp/docker_core1.sock:/var/run/docker.sock -i ../salt/srv/base/ssh/core_id_rsa core@192.168.122.193
-ssh -nNT -L /tmp/docker_core2.sock:/var/run/docker.sock -i ../salt/srv/base/ssh/core_id_rsa core@192.168.122.27
-ssh -nNT -L /tmp/docker_core3.sock:/var/run/docker.sock -i ../salt/srv/base/ssh/core_id_rsa core@192.168.122.32
-ssh -nNT -L /tmp/docker_core4.sock:/var/run/docker.sock -i ../salt/srv/base/ssh/core_id_rsa core@192.168.122.82
+ssh -nNT -L /tmp/docker_core1.sock:/var/run/docker.sock -i ../salt/srv/base/ssh/core_id_rsa core@192.168.122.95
+ssh -nNT -L /tmp/docker_core2.sock:/var/run/docker.sock -i ../salt/srv/base/ssh/core_id_rsa core@192.168.122.108
+ssh -nNT -L /tmp/docker_core3.sock:/var/run/docker.sock -i ../salt/srv/base/ssh/core_id_rsa core@192.168.122.157
+ssh -nNT -L /tmp/docker_core4.sock:/var/run/docker.sock -i ../salt/srv/base/ssh/core_id_rsa core@192.168.122.221
 ```
 
 * To request the test service, you may update you ``/etc/hosts`` file to add
   the following entry (use any node IP address):
 
 ```bash
-sudo echo "192.168.122.82  service.cluster.lab" >> /etc/hosts
+sudo echo "192.168.122.221  service.cluster.lab" >> /etc/hosts
+sudo echo "192.168.122.221  service.qualif.cluster.lab" >> /etc/hosts
 ```
 
 
