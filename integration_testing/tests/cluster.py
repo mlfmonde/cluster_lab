@@ -5,6 +5,7 @@ import json
 import logging
 import requests
 import time
+import uuid
 
 from collections import namedtuple
 from datetime import datetime
@@ -55,7 +56,7 @@ class Cluster:
     ):
         """Deploy a service waiting the end end of deployment before carry on
         """
-        def deploy_finished(kv_app_before, kv_app_after):
+        def deploy_finished(kv_app_before, kv_app_after, *args, **kwargs):
             if kv_app_before and kv_app_after:
                 if kv_app_after.deploy_date > kv_app_before.deploy_date:
                     return True
@@ -91,7 +92,7 @@ class Cluster:
     def destroy_and_wait(
         self, application, timeout=DEFAULT_TIMEOUT, event_consumed=None
     ):
-        def deploy_finished(kv_app_before, kv_app_after):
+        def deploy_finished(kv_app_before, kv_app_after, *args, **kwargs):
             if not kv_app_after:
                 return True
             else:
@@ -113,6 +114,38 @@ class Cluster:
             timeout
         )
 
+    def migrate_and_wait(
+        self, source_app, target_app, timeout=DEFAULT_TIMEOUT
+    ):
+
+        self.was_maintenance = False
+
+        def migrate_finished(
+            kv_app_before, kv_app_after, maintenance=None, self=None, **kwargs
+        ):
+            if maintenance:
+                self.was_maintenance = True
+            if self.was_maintenance and not maintenance:
+                return True
+            return False
+
+        self.fire_event_and_wait(
+            target_app,
+            'migrate',
+            json.dumps(
+                {
+                    'repo': source_app.repo_url,
+                    'branch': source_app.branch,
+                    'target': {
+                        'repo': target_app.repo_url,
+                        'branch': target_app.branch
+                    }
+                }
+            ),
+            migrate_finished,
+            timeout
+        )
+
     def fire_event_and_wait(
         self, application, event_name, payload, event_consumed, timeout
     ):
@@ -126,7 +159,12 @@ class Cluster:
         )
         start_date = datetime.now()
         while not event_consumed(
-                app_before, self.get_app_from_kv(application.app_key)
+                app_before,
+                self.get_app_from_kv(application.app_key),
+                maintenance=self.consul.kv.get_record(
+                    application.maintenance_key
+                ),
+                self=self
         ):
             time.sleep(1)
             if (datetime.now() - start_date).seconds > timeout:
@@ -224,6 +262,12 @@ class Cluster:
         ) != "default123":
             self.consul.kv.delete(
                 'maintenance/{}'.format(application.name)
+            )
+        if self.consul.kv.get(
+            'migrate/{}'.format(application.name), default="default123"
+        ) != "default123":
+            self.consul.kv.delete(
+                'migrate/{}'.format(application.name), recurse=True
             )
         # remove containers, old volumes and snapshots
         for name, node in self.nodes.items():
@@ -341,6 +385,23 @@ class Cluster:
             ] if scheduled_filter(s, *args, **kwargs)
         ]
 
+    def create_service_data(self, domain=None):
+        if not domain:
+            domain = 'service.cluster.lab'
+        session = requests.Session()
+        name = str(uuid.uuid4())
+        content = str(uuid.uuid4())
+        response = session.post(
+            'http://{}/example?name={}&content={}'.format(
+                domain, name, content
+            )
+        )
+        assert 201 == response.status_code
+        location = response.headers['Location']
+        id = response.json()['id']
+        session.close()
+        return (id, location, name, content)
+
 
 def _json_object_hook(data):
     keys = [k.replace('-', '_') for k in data.keys()]
@@ -427,6 +488,10 @@ class Application(object):
     @property
     def app_key(self):
         return 'app/{}'.format(self.name)
+
+    @property
+    def maintenance_key(self):
+        return 'maintenance/{}'.format(self.name)
 
     @property
     def volume_prefix(self):

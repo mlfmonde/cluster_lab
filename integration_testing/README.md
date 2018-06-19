@@ -99,24 +99,25 @@ sudo salt '*' grains.get ip4_interfaces:eth0
 * To consul, you need to open an ssh tunnel that consul is accessible on
   ``http://localhost:8500``:
 
-```bash
-ssh -L 8500:localhost:8500 core@192.168.122.32 -i salt/srv/base/ssh/core_id_rsa
+```bash250
+ssh -L 8500:localhost:8500 core@192.168.122.95 -i salt/srv/base/ssh/core_id_rsa
 ```
 
 * To each docker daemons, create an ssh tunnel to the socket for each nodes:
 
 ```bash
-ssh -nNT -L /tmp/docker_core1.sock:/var/run/docker.sock -i ../salt/srv/base/ssh/core_id_rsa core@192.168.122.193
-ssh -nNT -L /tmp/docker_core2.sock:/var/run/docker.sock -i ../salt/srv/base/ssh/core_id_rsa core@192.168.122.27
-ssh -nNT -L /tmp/docker_core3.sock:/var/run/docker.sock -i ../salt/srv/base/ssh/core_id_rsa core@192.168.122.32
-ssh -nNT -L /tmp/docker_core4.sock:/var/run/docker.sock -i ../salt/srv/base/ssh/core_id_rsa core@192.168.122.82
+ssh -nNT -L /tmp/docker_core1.sock:/var/run/docker.sock -i ../salt/srv/base/ssh/core_id_rsa core@192.168.122.95
+ssh -nNT -L /tmp/docker_core2.sock:/var/run/docker.sock -i ../salt/srv/base/ssh/core_id_rsa core@192.168.122.108
+ssh -nNT -L /tmp/docker_core3.sock:/var/run/docker.sock -i ../salt/srv/base/ssh/core_id_rsa core@192.168.122.157
+ssh -nNT -L /tmp/docker_core4.sock:/var/run/docker.sock -i ../salt/srv/base/ssh/core_id_rsa core@192.168.122.221
 ```
 
 * To request the test service, you may update you ``/etc/hosts`` file to add
   the following entry (use any node IP address):
 
 ```bash
-sudo echo "192.168.122.82  service.cluster.lab" >> /etc/hosts
+sudo echo "192.168.122.221  service.cluster.lab" >> /etc/hosts
+sudo echo "192.168.122.221  service.qualif.cluster.lab" >> /etc/hosts
 ```
 
 
@@ -134,6 +135,40 @@ sudo echo "192.168.122.82  service.cluster.lab" >> /etc/hosts
 > *Note*: Firsts time you run tests they are quite slow as the base image (
 > python:3-stretch) used in the test service is quite heavy and must be
 > downloaded on each nodes. This depend on your network band width.
+
+
+## Troubleshoot
+
+Here some commons troubleshoots you can met;
+
+### ConnectionError
+
+While running contexts test case you can get a connection error:
+
+```python
+  raise ConnectionError(err, request=request)
+requests.exceptions.ConnectionError: ('Connection aborted.', ConnectionRefusedError(111, 'Connection refused'))
+```
+This happens when the ``/tmp/docker_core?.sock`` file exists but the ssh
+tunnel that bind the docker daemon socket stoped.
+
+Make sure your coreos machine are up and ssh connection alive.
+
+## RequestError
+
+While running contexts test case you can get a Request error:
+
+```python
+  raise exceptions.RequestError(str(err))
+consulate.exceptions.RequestError: HTTPConnectionPool(host='localhost', port=8500): Max retries exceeded with url: /v1/kv/app/cluster_lab_test_service_without_caddyfile.89b06 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f52153cfba8>: Failed to establish a new connection: [Errno 111] Connection refused',))
+```
+
+This happens when the ssh tunnel to connect to the consul API was stopped.
+
+Make sure your consul cluster is alive and the api responding on
+``localhost:8500`` (localhost where you are running testcase
+)
+
 
 ## POCs
 

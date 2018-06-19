@@ -67,7 +67,8 @@ class ClusterTestCase:
                     name,
                     "cluster_consul_1",
                     path,
-                    "cat: can't open '{}': No such file or directory\n".format(path),
+                    "cat: can't open '{}': No such file or "
+                    "directory\n".format(path),
                 )
 
     def assert_btrfs_scheduled(self, kind, volume, nodes):
@@ -129,7 +130,7 @@ class ClusterTestCase:
         ).exec_run(
             'sh -c "sleep 0.1; cat {}"'.format(path)
         ).output.decode('utf-8')
-        assert expected_content == content,\
+        assert expected_content.strip() == content.strip(), \
             "Content not matched, expected: {} - got {}".format(
                 expected_content, content
             )

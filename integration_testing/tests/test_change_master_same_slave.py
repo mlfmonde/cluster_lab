@@ -6,7 +6,6 @@ Tag is used to make the service the same over different commits.
 import os
 import requests
 import subprocess
-import uuid
 
 from . import base_case
 from . import cluster
@@ -39,18 +38,12 @@ class WhenDeployingServiceWithANewMaster(
             app.master, app.ct.anyblok, '--wsgi-host 0.0.0.0', timeout=30
         )
         self.cluster.wait_http_code('http://service.cluster.lab', timeout=10)
-        session = requests.Session()
-        self.record_name = str(uuid.uuid4())
-        self.record_content = str(uuid.uuid4())
-        response = session.post(
-            'http://service.cluster.lab/example?name={}&content={}'.format(
-                self.record_name, self.record_content
-            )
-        )
-        assert 201 == response.status_code
-        self.record_location = response.headers['Location']
-        self.record_id = response.json()['id']
-        session.close()
+        (
+            self.record_id,
+            self.record_location,
+            self.record_name,
+            self.record_content
+        ) = self.cluster.create_service_data()
 
         self.master = 'core1'
         self.slave = 'core2'

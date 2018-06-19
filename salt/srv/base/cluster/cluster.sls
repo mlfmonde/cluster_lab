@@ -30,7 +30,9 @@ cluster-cluster-systemd-unit:
         compose_bin: {{ compose_binary }}
         compose_options: "-f docker-compose.yml -f docker-compose.override.yml"
 #        type: "oneshot"
-        cmd_start: "up --build"
+        cmd_startpre1: "pull"
+        cmd_startpre2: "build"
+        cmd_start: "up"
         cmd_stop: "stop"
 #        remain_after_exit: "no"
 
@@ -54,8 +56,6 @@ cluster_cluster_service_started:
     - name: cluster.service
     - enable: True
     - reload: True
-#    - onchanges:
-#      - file: cluster-cluster-systemd-unit
     - require:
       - git: cluster-code
       - cmd: cluster_buttervolume_service_started
