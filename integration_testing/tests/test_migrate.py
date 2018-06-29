@@ -119,22 +119,24 @@ class WhenMigrateDataBetweenServices(
             'cat: {}: No such file or directory\n'.format(file_path)
         )
 
-    def qualif_fsdata_should_not_return_qualif_content(self):
+    def qualif_fsdata_using_non_migrable_volume_should_return_qualif_content(
+        self
+    ):
         file_path = os.path.join("/var/test_service/", self.qualif_rec_name)
         self.assert_file(
             'core1',
             self.kvqualif.ct.anyblok,
             file_path,
-            'cat: {}: No such file or directory\n'.format(file_path)
+            self.qualif_rec_content
         )
 
-    def qualif_fsdata_should_return_prod_content(self):
+    def qualif_fsdata_should_not_return_prod_content(self):
         file_path = os.path.join("/var/test_service/", self.prod_rec_name)
         self.assert_file(
             'core1',
             self.kvqualif.ct.anyblok,
             file_path,
-            self.prod_rec_content
+            'cat: {}: No such file or directory\n'.format(file_path)
         )
 
     def qualif_fsdata_should_return_migrate_content(self):
